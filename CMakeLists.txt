@@ -201,7 +201,7 @@ if ("${CPACK_GENERATOR}" STREQUAL "DEB")
     include(cmake/deb-package.cmake)
 
     # only works inside a GitLab CI/CD runner
-    set(GITLAB_PACKAGE_BASE_URL "https://gitlab.com/api/v4/projects/22567556/packages/generic/hcs-logger")
+    set(GITLAB_PACKAGE_BASE_URL "https://gitlab.com/api/v4/projects/24027883/packages/generic/hcs-logger")
     set(PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.deb")
     set(PACKAGE_FILE "${CMAKE_BINARY_DIR}/${PACKAGE_FILE_NAME}")
     include(gitlab-package-push)
@@ -215,7 +215,7 @@ if ("${CPACK_GENERATOR}" STREQUAL "RPM")
     include(cmake/rpm-package.cmake)
 
     # only works inside a GitLab CI/CD runner
-    set(GITLAB_PACKAGE_BASE_URL "https://gitlab.com/api/v4/projects/22567556/packages/generic/hcs-logger")
+    set(GITLAB_PACKAGE_BASE_URL "https://gitlab.com/api/v4/projects/24027883/packages/generic/hcs-logger")
     set(PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.rpm")
     set(PACKAGE_FILE "${CMAKE_BINARY_DIR}/${PACKAGE_FILE_NAME}")
     include(gitlab-package-push)

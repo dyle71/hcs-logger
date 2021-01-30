@@ -14,6 +14,7 @@
 
 using namespace headcode::logger;
 
+
 /**
  * @brief   Our logger registry.
  * The is the "database" of all known loggers.

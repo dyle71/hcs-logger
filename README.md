@@ -8,20 +8,22 @@ with no further dependencies.
 
 All `headcode.space` software follows these directives:
 
-1. Provide very high quality C++ software. That's the topmost goal.
+1. Provide very **high quality** C++ software. That's the topmost goal.
 
-2. Provide appealing C++ software, i.e. software which is easily read and understood. Second goal.
+2. Provide appealing C++ software, i.e. software which is **easily read and understood**. 
+   Second goal.
 
-3. Provide software with super minimal interfaces. I try to really provide the absolute minimum without 
-   any bloat. The users of the software should only include the main header file 
+3. Provide software with **super minimal public interfaces**. I try to really provide the absolute 
+   minimum without any bloat. The users of the software should only include the main header file 
    (e.g. `#include <headcode/logger/logger.hpp>`) and nothing else. These are self-contained and 
    rely only on C++ standard headers. No additional 3rd party headers required. Third goal.
   
-4. Provide libraries and binaries with little to no runtime dependencies. Yet, linkage might
+4. Provide libraries and binaries with **little to no runtime dependencies**. Yet, linkage might
    require additional libraries (sometimes from `headcode.space` sometimes else). Whenever
-   possible I strive to go for the static libraries, because a) the resulting binaries have
-   little to no runtime dependency and can be installed directly with a mere `copy` and
-   b) they are smaller too, since the linkers tend to strip off stuff which is not needed.
+   possible I strive to go for the *static libraries*, because a) the resulting binaries when
+   linked against these libraries have little to no runtime dependency and can be installed 
+   directly with a mere `copy` and b) they are smaller too, since the linkers tend to strip off 
+   stuff which is not needed.
 
 I'm by no means perfect. There's always room for improvements and there are sure still bugs.
 If you have any suggestions please drop in an email at https://gitlab.com/headcode.space/logger/-/issues.
