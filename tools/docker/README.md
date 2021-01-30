@@ -15,7 +15,7 @@ installable package artefacts. All builder Dockerfiles are labeled `Dockerfile.b
 
 1. Create a Docker builder for a chosen platform (e.g. Debian 10 - "Buster") in the current folder:
 ```bash
-$ docker build --tag hcs-logger:debian-buster --file Dockerfile.build.debian-buster .
+$ docker build --tag headcode-logger:debian-buster --file Dockerfile.build.debian-buster .
 ```
 
 

@@ -20,7 +20,7 @@ cd $(dirname $(readlink -f ${0}))
 
 PREFIX="${1}"
 if [[ -z ${PREFIX} ]]; then
-    PREFIX="hcs-benchmark"
+    PREFIX="hcs-logger"
 fi
 PLATFORMS=$(find . -type f -name 'Dockerfile.build.*' | cut -d '.' -f 4 | xargs echo)
 

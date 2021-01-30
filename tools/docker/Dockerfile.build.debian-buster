@@ -10,9 +10,6 @@ FROM debian:10
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# installs necessary and optional packages
-# optional:
-#   - libssl-dev for OpenSSL support
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -24,12 +21,11 @@ RUN apt-get update && apt-get install -y \
     graphviz \
     curl \
     wget \
-    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # install non repository packages
-#COPY build/*.deb /
-#COPY build/debian-buster/*.deb /
+#COPY install/*.deb /
+#COPY install/debian-buster/*.deb /
 #RUN dpkg --install /*.deb
 
 RUN mkdir -p /build
