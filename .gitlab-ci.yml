@@ -1,0 +1,88 @@
+# ------------------------------------------------------------
+# This file is the main CMakeLists of logger of headcode.space
+#
+# The 'LICENSE.txt' file in the project root holds the software license.
+# Copyright (C) 2021 headcode.space e.U.
+# Oliver Maurhart <info@headcode.space>, https://www.headcode.space
+# ------------------------------------------------------------
+
+stages:
+  - build
+  - package
+
+build:
+  stage: build
+  image: registry.gitlab.com/headcode.space/logger:ubuntu-focal
+  script:
+    - git submodule init
+    - git submodule update
+    - rm -rf build &> /dev/null
+    - mkdir -p build
+    - cd build
+    - cmake -DBUILD_TESTING=On -DCMAKE_BUILD_TYPE=Debug -DPROFILING_MODE_ENABLED:Bool=On ..
+    - make
+    - ctest -VV -F --timeout 10.0
+    - make run-gcovr
+    - make package_source
+    - cd ${CI_PROJECT_DIR}
+  artifacts:
+    paths:
+      - build/*.tar.gz
+      - build/gcovr-report.xml
+    name: ${CI_PROJECT_NAME}-sources
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+
+package-debian-buster:
+  stage: package
+  image: registry.gitlab.com/headcode.space/logger:debian-buster
+  script:
+    - git submodule init
+    - git submodule update
+    - rm -rf build &> /dev/null
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=DEB -DCPACK_SYSTEM_NAME=debian-buster -DCI_JOB_TOKEN=$CI_JOB_TOKEN ..
+    - make
+    - make package
+    - make gitlab_push_package
+  artifacts:
+    paths:
+      - build/*.deb
+    name: ${CI_PROJECT_NAME}-debian-buster
+
+package-ubuntu-focal:
+  stage: package
+  image: registry.gitlab.com/headcode.space/logger:ubuntu-focal
+  script:
+    - git submodule init
+    - git submodule update
+    - rm -rf build &> /dev/null
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=DEB -DCPACK_SYSTEM_NAME=ubuntu-focal -DCI_JOB_TOKEN=$CI_JOB_TOKEN ..
+    - make
+    - make package
+    - make gitlab_push_package
+  artifacts:
+    paths:
+      - build/*.deb
+    name: ${CI_PROJECT_NAME}-ubuntu-focal
+
+package-fedora32:
+  stage: package
+  image: registry.gitlab.com/headcode.space/logger:fedora32
+  script:
+    - git submodule init
+    - git submodule update
+    - rm -rf build &> /dev/null
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=RPM -DCPACK_SYSTEM_NAME=fedora32 -DCI_JOB_TOKEN=$CI_JOB_TOKEN ..
+    - make
+    - make package
+    - make gitlab_push_package
+  artifacts:
+    paths:
+      - build/*.rpm
+    name: ${CI_PROJECT_NAME}-fedora32
+
