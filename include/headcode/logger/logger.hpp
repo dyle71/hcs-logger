@@ -10,7 +10,11 @@
 #define HEADCODE_SPACE_LOGGER_LOGGER_HPP
 
 
+#include "event.hpp"
+#include "formatter.hpp"
+#include "level.hpp"
 #include "logger_core.hpp"
+#include "sink.hpp"
 #include "version.hpp"
 
 

@@ -11,6 +11,9 @@ link_directories("${GTEST_LIBRARY_PATH};${GMOCK_LIBRARY_PATH}")
 set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
 
 set(UNIT_TEST_SRC
+    test_event.cpp
+    test_formatter.cpp
+    test_level.cpp
     test_logger.cpp
     test_version.cpp
 )

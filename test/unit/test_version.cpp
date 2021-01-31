@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <headcode/logger/version.hpp>
+#include <headcode/logger/logger.hpp>
 
 
 TEST(Version, regular) {

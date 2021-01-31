@@ -27,14 +27,20 @@ public:
     mutable std::shared_mutex mutex_;
 
     /**
+     * @brief   Time point when this registry came to live.
+     */
+    std::chrono::system_clock::time_point birth_;
+
+    /**
      * @brief   All known loggers.
      */
-    std::map<std::string, std::shared_ptr<Logger>> loggers_;
+    std::map<std::string, std::shared_ptr<headcode::logger::Logger>> loggers_;
 
     /**
      * @brief   Constructor.
      */
-    Registry() = default;
+    Registry() : birth_{std::chrono::system_clock::now()} {
+    }
 
     /**
      * @brief   Copy Constructor.
@@ -82,6 +88,32 @@ public:
 
 
 /**
+ * @brief   Creates the list of dot-separated names of all ancestors.
+ *
+ * E.g. given "foo.bar.baz" the list will be {"foo.bar", "foo", ""}.
+ *
+ * @param   name        name of the current logger.
+ * @return  list of ancestor names.
+ */
+static std::list<std::string> CreateListOfAncestors(std::string name) {
+
+    std::list<std::string> res;
+
+    if (!name.empty()) {
+        auto pos = name.rfind('.');
+        while (pos != std::string::npos) {
+            name = name.substr(0, pos);
+            res.push_back(name);
+            pos = name.rfind('.');
+        }
+        res.emplace_back(std::string{});
+    }
+
+    return res;
+}
+
+
+/**
  * @brief   Returns the Registry singleton.
  * @return  The one and only registry instance.
  */
@@ -92,23 +124,46 @@ static Registry & GetRegistryInstance() {
 
 
 Logger::Logger(std::string name) : name_{std::move(name)} {
+    ancestors_ = CreateListOfAncestors(name_);
+}
+
+
+std::chrono::system_clock::time_point Logger::GetBirth() {
+    auto const & registry = GetRegistryInstance();
+    return registry.birth_;
 }
 
 
 std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
 
-    std::shared_ptr<Logger> res;
-
-    {
-        auto & registry = GetRegistryInstance();
-        auto lock_read = registry.LockWrite();
-        auto iter = registry.loggers_.find(name);
-        if (iter == registry.loggers_.end()) {
-            registry.loggers_.emplace(name, std::shared_ptr<Logger>(new Logger{name}));
-        }
-
-        res = registry.loggers_[name];
+    if (name == "<root>") {
+        name = std::string{};
     }
 
-    return res;
+    auto left = name.find_first_not_of('.');
+    if ((left != std::string::npos) && (left != 0)) {
+        name = name.substr(left);
+    }
+    auto right = name.find_last_not_of('.');
+    if ((right != std::string::npos) && (right != name.size() - 1)) {
+        name = name.substr(0, right + 1);
+    }
+
+    auto & registry = GetRegistryInstance();
+
+    auto lock_write = registry.LockWrite();
+    auto iter = registry.loggers_.find(name);
+    if (iter == registry.loggers_.end()) {
+        registry.loggers_.emplace(name, std::shared_ptr<Logger>(new Logger{name}));
+    }
+
+    return registry.loggers_[name];
+}
+
+
+std::string Logger::GetName() const {
+    if (name_.empty()) {
+        return "<root>";
+    }
+    return name_;
 }

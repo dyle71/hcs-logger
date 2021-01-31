@@ -8,6 +8,8 @@
 
 
 set(LOGGER_SRC
+    event.cpp
+    level.cpp
     logger.cpp
 )
 
