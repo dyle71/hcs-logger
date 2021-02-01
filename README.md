@@ -11,7 +11,7 @@ and `Warning` are enabled. So this is totally sufficient:
 using namespace headcode::logger;
 
 int main(int argc, char ** argv) {
-    Warning() << "Hello World!";
+    Warning{} << "Hello World!";
     return 0;
 }
 ```
@@ -24,7 +24,7 @@ using namespace headcode::logger;
 
 int main(int argc, char ** argv) {
     Logger::GetLogger()->SetBarrier(Level::kDebug);
-    Debug() << "Hello World!";
+    Debug{} << "Hello World!";
     return 0;
 }
 ```
@@ -68,7 +68,7 @@ Example: different log levels for different outputs:
 auto file_sink = std::make_shared<headcode::logger::FileSink>("my_app.log");
 file_sink->SetBarrier(headcode::logger::Level::kInfo);
 // and log to stderr too (including debug stuff)
-auto console_sink = std::make_shared<headcode::logger::FileSink>("my_app.log");
+auto console_sink = std::make_shared<headcode::logger::ConsoleSink>();
 console_sink->SetBarrier(headcode::logger::Level::kDebug);
 
 // set sink: only 1 sink
@@ -80,7 +80,6 @@ headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
 ```
 
 * Different formatting for different sinks (e.g. console, file, syslog, ...)
-
 
 
 
@@ -122,17 +121,17 @@ If you have any suggestions please drop in an email at https://gitlab.com/headco
 using namespace headcode::logger;
 
 void foo() {
-    Debug() << "This is a debug message of foo, but routed to the main logger.";
-    Debug("foo") << "This is a debug message of foo, yet addressed to the 'foo' logger.";
-    Debug("foo.child") << "This is a debug message of foo.child.";
+    Debug{} << "This is a debug message of foo, but routed to the main logger.";
+    Debug{"foo"} << "This is a debug message of foo, yet addressed to the 'foo' logger.";
+    Debug{"foo.child"} << "This is a debug message of foo.child.";
 }
 
 
 void bar() {
-    Critical() << "bar() made a critical. The number is: " << 42;
-    Warn() << "Pressure raising... to " << 3.1415;
-    Info() << "All ok.";
-    Debug() << "Object at 1337dead has an invalid value of 0xgibberish.";
+    Critical{} << "bar() made a critical. The number is: " << 42;
+    Warn{} << "Pressure raising... to " << 3.1415;
+    Info{} << "All ok.";
+    Debug{} << "Object at 1337dead has an invalid value of 0xgibberish.";
 }
 
 
@@ -161,7 +160,7 @@ int main(int argc, char ** argv) {
     foo();
     bar();
 
-    return;
+    return 0;
 }
 ```
 
