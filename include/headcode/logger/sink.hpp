@@ -132,22 +132,53 @@ private:
 
 
 /**
- * @brief   A sink which sends consumes all events and does not do nothing.
- * This is the typical sink for a file.
+ * @brief   A sink which sends all event messages to a file.
  *
- * TODO: Code example here.
+ * The file is not truncated. Log messages will be appended at the end.
+ * If a filename is missing, then "a.log" will be created.
+ *
+ *
+ * Example: log all to a file "app.log":
+ *
+ * @code
+ * #include <fstream>
+ * #include <memory>
+ * 
+ * #include <headcode/logger/logger.hpp>
+ * 
+ * using namespace headcode::logger;
+ * 
+ * 
+ * void SetupLogging() {
+ *     auto file_sink = std::make_shared<FileSink>("app.log");
+ *     Logger::GetLogger()->SetSink(file_sink);
+ *     Logger::GetLogger()->SetBarrier(Level::kDebug);
+ * }
+ * 
+ * 
+ * int main(int , char **) {
+ * 
+ *     SetupLogging();
+ * 
+ *     Debug() << "This is a debug message." << std::endl;
+ *     Info() << "... and this is a warning message." << std::endl;
+ *     Warning() << "See yourself been warned." << std::endl;
+ *     Critical() << "Let's panic!" << std::endl;
+ * 
+ *     return 0;
+ * }
+ * @endcode
  */
-class StreamSink : public Sink {
+class FileSink : public Sink {
 
-    std::ostream & stream_;        //!< @brief The stream to push the messages to.
+    std::string filename_;      //!< @brief The name of the file to write to.
 
 public:
     /**
      * @brief   Constructs a sink which pushes the log messages into a stream.
-     * @param   stream      the stream to push to.
+     * @param   filename        Name of the file to write to.
      */
-    explicit StreamSink(std::ostream & stream) : Sink{}, stream_{stream} {
-    }
+    explicit FileSink(std::string filename = {});
 
 private:
     /**

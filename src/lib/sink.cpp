@@ -8,6 +8,8 @@
 
 #include <headcode/logger/sink.hpp>
 
+#include <fstream>
+#include <utility>
 
 using namespace headcode::logger;
 
@@ -43,7 +45,16 @@ void NullSink::Log_(Event const &) {
 }
 
 
-void StreamSink::Log_(Event const & event) {
-    stream_ << Format(event);
-    stream_.flush();
+FileSink::FileSink(std::string filename) : Sink{}, filename_{std::move(filename)} {
+    if (filename_.empty()) {
+        filename_ = "a.log";
+    }
+}
+
+
+void FileSink::Log_(Event const & event) {
+    std::ofstream stream;
+    stream.open(filename_, std::ios::out | std::ios::app);
+    stream << Format(event);
+    stream.flush();
 }

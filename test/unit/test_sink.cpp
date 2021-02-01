@@ -7,6 +7,7 @@
  */
 
 #include <fstream>
+#include <filesystem>
 
 #include <gtest/gtest.h>
 
@@ -46,11 +47,13 @@ TEST(Sink, barrier) {
 
 TEST(Sink, file) {
 
-    std::ofstream log_out;
-    log_out.open("test.log", std::ios::out | std::ios::trunc);
+    auto log_file = std::filesystem::path{"test.log"};
+    if (std::filesystem::exists(log_file)) {
+        std::filesystem::remove(log_file);
+    }
 
     {
-        auto sink = std::make_shared<headcode::logger::StreamSink>(log_out);
+        auto sink = std::make_shared<headcode::logger::FileSink>("test.log");
 
         auto event_debug = headcode::logger::Debug();
         event_debug << "This is a debug message." << std::endl;
@@ -68,8 +71,6 @@ TEST(Sink, file) {
         event_critical << "This is a critical message." << std::endl;
         sink->Log(event_critical);
     }
-
-    log_out.close();
 
     std::ifstream log_in;
     log_in.open("test.log", std::ios::in);

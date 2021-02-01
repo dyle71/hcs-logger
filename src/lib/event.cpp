@@ -35,3 +35,13 @@ Event::Event(int level, std::shared_ptr<Logger> logger)
           level_{level},
           since_start_{std::chrono::duration_cast<std::chrono::microseconds>(time_point_ - Logger::GetBirth())} {
 }
+
+
+Event::~Event() noexcept {
+    try {
+        if (logger_) {
+            logger_->Log(*this);
+        }
+    } catch (...) {
+    }
+}

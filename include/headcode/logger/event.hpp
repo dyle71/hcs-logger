@@ -80,7 +80,7 @@ public:
     /**
      * @brief   Destructor.
      */
-    ~Event() override = default;
+    ~Event() noexcept override;
 
     /**
      * @brief   Assignment operator.
