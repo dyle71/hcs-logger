@@ -9,13 +9,28 @@
 
 #include <headcode/logger/event.hpp>
 #include <headcode/logger/logger_core.hpp>
+#include <utility>
 
 using namespace headcode::logger;
 
 
-Event::Event(int level, std::string logger_name)
+Event::Event(int level, std::string logger_name) : Event{level, Logger::GetLogger(std::move(logger_name))} {
+}
+
+
+Event::Event(Level level, std::string logger_name)
+        : Event{static_cast<int>(level), Logger::GetLogger(std::move(logger_name))} {
+}
+
+
+Event::Event(Level level, std::shared_ptr<Logger> logger)
+        : Event{static_cast<int>(level), std::move(logger)} {
+}
+
+
+Event::Event(int level, std::shared_ptr<Logger> logger)
         : time_point_{std::chrono::system_clock::now()},
-          logger_name_{std::move(logger_name)},
+          logger_{std::move(logger)},
           level_{level},
           since_start_{std::chrono::duration_cast<std::chrono::microseconds>(time_point_ - Logger::GetBirth())} {
 }

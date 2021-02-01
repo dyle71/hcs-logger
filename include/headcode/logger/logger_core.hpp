@@ -121,7 +121,7 @@ public:
      * @param   name        the name of the logger instance.
      * @return  The logger instance with that name.
      */
-    static std::shared_ptr<Logger> GetLogger(std::string name);
+    static std::shared_ptr<Logger> GetLogger(std::string name = {});
 
     /**
      * @brief   Returns the name of this logger instance.
