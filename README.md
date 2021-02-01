@@ -3,6 +3,34 @@
 This C++17 library is very much like log4c++. Yet, hcs-logger strives to be minimal and concise 
 with no further dependencies.
 
+In general, everything stays out of the way. On default only `Critical`
+and `Warning` are enabled. So this is totally sufficient:
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    Warning() << "Hello World!";
+    return 0;
+}
+```
+
+To enable debug messages right from the start:
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    Logger::GetLogger()->SetBarrier(Level::kDebug);
+    Debug() << "Hello World!";
+    return 0;
+}
+```
+
+That said, `hcs-logger` can do some more things:
+
 Features:
 
 * Differentiate between log sources or systems and turn each on or off
@@ -53,33 +81,7 @@ headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
 
 * Different formatting for different sinks (e.g. console, file, syslog, ...)
 
-**BUT** usually the whole thing stays out of the way. On default only `Critical`
-and `Warning` are enabled. So this is totally sufficient:
 
-```c++
-#include <headcode/logger/logger.hpp>
-
-using namespace headcode::logger;
-
-int main(int argc, char ** argv) {
-    Warning() << "Hello World!";
-    return 0;
-}
-```
-
-To enable debug messages right from the start:
-
-```c++
-#include <headcode/logger/logger.hpp>
-
-using namespace headcode::logger;
-
-int main(int argc, char ** argv) {
-    Logger::GetLogger()->SetBarrier(Level::kDebug);
-    Debug() << "Hello World!";
-    return 0;
-}
-```
 
 
 ## Philosophy
@@ -159,7 +161,7 @@ int main(int argc, char ** argv) {
     foo();
     bar();
 
-    return();
+    return;
 }
 ```
 
