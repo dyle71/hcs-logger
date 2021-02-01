@@ -24,6 +24,11 @@ TEST(Logger, regular) {
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
 
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("."), logger);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger(".."), logger);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("..."), logger);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger(".........."), logger);
+
     auto logger_foo = headcode::logger::Logger::GetLogger("foo");
     ASSERT_TRUE(logger_foo != nullptr);
     EXPECT_STREQ(logger_foo->GetName().c_str(), "foo");
