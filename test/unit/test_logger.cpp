@@ -50,9 +50,9 @@ TEST(Logger, sinks) {
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
 
     EXPECT_EQ(logger->GetSinks().size(), 0u);
-    logger->AddSink(std::make_shared<headcode::logger::Sink>());
+    logger->AddSink(std::make_shared<headcode::logger::NullSink>());
     EXPECT_EQ(logger->GetSinks().size(), 1u);
-    logger->AddSink(std::make_shared<headcode::logger::Sink>());
+    logger->AddSink(std::make_shared<headcode::logger::NullSink>());
     EXPECT_EQ(logger->GetSinks().size(), 2u);
     auto sinks = logger->GetSinks();
     EXPECT_EQ(sinks.size(), 2u);
@@ -60,10 +60,10 @@ TEST(Logger, sinks) {
     EXPECT_EQ(sinks.size(), 0u);
     EXPECT_EQ(logger->GetSinks().size(), 2u);
 
-    logger->SetSink(std::make_shared<headcode::logger::Sink>());
+    logger->SetSink(std::make_shared<headcode::logger::NullSink>());
     EXPECT_EQ(logger->GetSinks().size(), 1u);
 
-    auto sink = std::make_shared<headcode::logger::Sink>();
+    auto sink = std::make_shared<headcode::logger::NullSink>();
     logger->AddSink(sink);
     EXPECT_EQ(logger->GetSinks().size(), 2u);
     logger->AddSink(sink);
@@ -298,7 +298,7 @@ TEST(Logger, ancestors) {
     EXPECT_STREQ(logger_bar->GetName().c_str(), "bar");
     std::list<std::string> ancestors_bar = {""};
     EXPECT_TRUE(logger_bar->GetAncestors() == ancestors_bar);
-    
+
     auto logger_bar_baz = headcode::logger::Logger::GetLogger("bar.baz");
     ASSERT_TRUE(logger_bar_baz != nullptr);
     EXPECT_STREQ(logger_bar_baz->GetName().c_str(), "bar.baz");

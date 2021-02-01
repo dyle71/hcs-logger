@@ -15,6 +15,7 @@ set(UNIT_TEST_SRC
     test_formatter.cpp
     test_level.cpp
     test_logger.cpp
+    test_sink.cpp
     test_version.cpp
 )
 

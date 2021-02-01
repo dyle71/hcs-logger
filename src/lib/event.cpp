@@ -25,8 +25,7 @@ Event::Event(Level level, std::string logger_name)
 }
 
 
-Event::Event(Level level, std::shared_ptr<Logger> logger)
-        : Event{static_cast<int>(level), std::move(logger)} {
+Event::Event(Level level, std::shared_ptr<Logger> logger) : Event{static_cast<int>(level), std::move(logger)} {
 }
 
 

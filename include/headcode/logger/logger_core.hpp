@@ -74,7 +74,7 @@ class Logger {
     std::string name_;                              //!< @brief The name of this logger.
     std::list<std::string> ancestors_;              //!< @brief All names of all parent loggers in order.
     unsigned int id_{0};                            //!< @brief An id of this logger.
-    int barrier_{0};                                //!< @brief Log level barrier (see description).#
+    int barrier_{0};                                //!< @brief Log level barrier (see description).
     std::list<std::shared_ptr<Sink>> sinks_;        //!< @brief All Sinks attached to this logger.
     std::uint64_t events_logged_{0};                //!< @brief Number of events logged so far.
 
@@ -180,7 +180,7 @@ public:
      * @brief   Gets the next known parent logger.
      * @return  The next known, registered parent logger.
      */
-    std::shared_ptr<Logger> GetParentLogger() const;
+    [[nodiscard]] std::shared_ptr<Logger> GetParentLogger() const;
 
     /**
      * @brief   Returns the name of this logger instance.

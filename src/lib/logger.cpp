@@ -245,7 +245,7 @@ void Logger::Log(Event const & event) {
     ++events_logged_;
 
     if (GetBarrier() > 0) {
-        for (auto & sink: sinks_) {
+        for (auto & sink : sinks_) {
             sink->Log(event);
         }
     } else {
