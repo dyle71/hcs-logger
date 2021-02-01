@@ -31,11 +31,59 @@ If you have any suggestions please drop in an email at https://gitlab.com/headco
 
 ## The API
 
-TBD
+**TBD**
+
 
 ## Usage example
 
-TDB
+```c++
+#include <headcode/logger/logger.hpp>
+
+void foo() {
+    headcode::logger::Debug() << "This is a debug message of foo, but routed to the main logger.";
+    headcode::logger::Debug("foo") << "This is a debug message of foo, yet address to 'foo' logger.";
+    headcode::logger::Debug("foo.child") << "This is a debug message of foo.child.";
+}
+
+
+void bar() {
+    headcode::logger::Critical() << "bar() made a critical. The number is: " << 42;
+    headcode::logger::Warn() << "Pressure raising... to " << 3.1415;
+    headcode::logger::Info() << "All ok.";
+    headcode::logger::Debug() << "Object at 1337dead has an invalid value of 0xgibberish.";
+}
+
+
+int main(int argc, char ** argv) {
+
+    // only critical and warnings of bar() are pushed, foo() remains silent
+    foo();
+    bar();
+    
+    // activate also debug messages: raise the barrie to debug ==> everything is pushed
+    headcode::logger::Logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
+    
+    foo();
+    bar();
+    
+    // now turn off ALL messages associated with logger "foo" but keep "foo.child" alive for debug.
+    headcode::logger::Logger::GetLogger("foo")->SetBarrier(headcode::logger::Level::kSilent);
+    headcode::logger::Logger::GetLogger("foo.child")->SetBarrier(headcode::logger::Level::kDebug);
+    
+    foo();
+    bar();
+    
+    // tell 'foo.child' to use the same as 'foo' (which is kSilent) again.
+    headcode::logger::Logger::GetLogger("foo.child")->SetBarrier(headcode::logger::Level::kUndefined);
+
+    foo();
+    bar();
+
+    return();
+}
+```
+
+**TBD**
 
 ## Project layout
 
