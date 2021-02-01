@@ -43,7 +43,7 @@ using namespace headcode::logger;
 
 void foo() {
     Debug() << "This is a debug message of foo, but routed to the main logger.";
-    Debug("foo") << "This is a debug message of foo, yet address to 'foo' logger.";
+    Debug("foo") << "This is a debug message of foo, yet addressed to the 'foo' logger.";
     Debug("foo.child") << "This is a debug message of foo.child.";
 }
 
@@ -62,7 +62,7 @@ int main(int argc, char ** argv) {
     foo();
     bar();
     
-    // activate also debug messages: raise the barrie to debug ==> everything is pushed
+    // activate also debug messages: raise the barrier to debug ==> everything is pushed
     Logger::GetLogger()->SetBarrier(Level::kDebug);
     
     foo();

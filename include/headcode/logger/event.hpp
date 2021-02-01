@@ -13,6 +13,7 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <utility>
 
 #include "level.hpp"
 
@@ -139,6 +140,94 @@ public:
      */
     std::chrono::system_clock::time_point GetTimePoint() const {
         return time_point_;
+    }
+};
+
+
+/**
+ * @brief   A critical event.
+ */
+class Critical : public Event {
+
+public:
+    /**
+     * @brief   Constructor.
+     * @param   logger_name         The name of the logger this event is addressed to.
+     */
+    explicit Critical(std::string logger_name = {}) : Event(Level::kCritical, std::move(logger_name)) {
+    }
+
+    /**
+     * @brief   Constructor.
+     * @param   logger              The logger this event is addressed to.
+     */
+    explicit Critical(std::shared_ptr<Logger> logger) : Event(Level::kCritical, std::move(logger)) {
+    }
+};
+
+
+/**
+ * @brief   A warning event.
+ */
+class Warning : public Event {
+
+public:
+    /**
+     * @brief   Constructor.
+     * @param   logger_name         The name of the logger this event is addressed to.
+     */
+    explicit Warning(std::string logger_name = {}) : Event(Level::kWarning, std::move(logger_name)) {
+    }
+
+    /**
+     * @brief   Constructor.
+     * @param   logger              The logger this event is addressed to.
+     */
+    explicit Warning(std::shared_ptr<Logger> logger) : Event(Level::kWarning, std::move(logger)) {
+    }
+};
+
+
+/**
+ * @brief   A info event.
+ */
+class Info : public Event {
+
+public:
+    /**
+     * @brief   Constructor.
+     * @param   logger_name         The name of the logger this event is addressed to.
+     */
+    explicit Info(std::string logger_name = {}) : Event(Level::kInfo, std::move(logger_name)) {
+    }
+
+    /**
+     * @brief   Constructor.
+     * @param   logger              The logger this event is addressed to.
+     */
+    explicit Info(std::shared_ptr<Logger> logger) : Event(Level::kInfo, std::move(logger)) {
+    }
+};
+
+
+/**
+ * @brief   A debug event.
+ */
+class Debug : public Event {
+
+public:
+    /**
+     * @brief   Constructor.
+     * @param   logger_name         The name of the logger this event is addressed to.
+     */
+    explicit Debug(std::string logger_name = {}) : Event(Level::kDebug, std::move(logger_name)) {
+    }
+
+    /**
+     * @brief   Constructor.
+     * @param   logger              The logger this event is addressed to.
+     */
+    explicit Debug(std::shared_ptr<Logger> logger) : Event(Level::kDebug, std::move(logger)) {
     }
 };
 
