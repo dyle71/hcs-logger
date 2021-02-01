@@ -9,6 +9,8 @@
 #ifndef HEADCODE_SPACE_LOGGER_SINK_HPP
 #define HEADCODE_SPACE_LOGGER_SINK_HPP
 
+#include "event.hpp"
+
 
 /**
  * @brief   The headcode logger namespace
@@ -30,12 +32,12 @@ public:
     /**
      * @brief   Copy constructor
      */
-    Sink(Logger const &) = delete;
+    Sink(Sink const &) = delete;
 
     /**
      * @brief   Move constructor
      */
-    Sink(Logger &&) = delete;
+    Sink(Sink &&) = delete;
 
     /**
      * @brief   Destructor
@@ -45,18 +47,18 @@ public:
     /**
      * @brief   Assignment operator.
      */
-    Sink & operator=(Logger const &) = delete;
+    Sink & operator=(Sink const &) = delete;
 
     /**
      * @brief   Move operator.
      */
-    Sink & operator=(Logger &&) = delete;
+    Sink & operator=(Sink &&) = delete;
 
     /**
-     * @brief   Performs the logging with a message.
-     * @param   message     The message to Log.
+     * @brief   The event to log.
+     * @param   event       the event to log.
      */
-    void Log(std::string message) const;
+    void Log(Event const & event);
 };
 
 

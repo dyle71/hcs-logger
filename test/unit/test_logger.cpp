@@ -15,6 +15,7 @@ TEST(Logger, empty) {
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+    EXPECT_EQ(logger->GetId(), 0u);
 }
 
 
@@ -23,6 +24,88 @@ TEST(Logger, regular) {
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+
+    auto logger_foo = headcode::logger::Logger::GetLogger("foo");
+    ASSERT_TRUE(logger_foo != nullptr);
+    EXPECT_STREQ(logger_foo->GetName().c_str(), "foo");
+
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kWarning));
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kUndefined));
+}
+
+
+TEST(Logger, barrier_root) {
+
+    auto logger = headcode::logger::Logger::GetLogger({});
+    ASSERT_TRUE(logger != nullptr);
+    EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kWarning));
+
+    logger->SetBarrier(headcode::logger::Level::kDebug);
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
+
+    logger->SetBarrier(headcode::logger::Level::kInfo);
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kInfo));
+
+    logger->SetBarrier(headcode::logger::Level::kWarning);
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kWarning));
+
+    logger->SetBarrier(headcode::logger::Level::kCritical);
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kCritical));
+
+    logger->SetBarrier(headcode::logger::Level::kSilent);
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kSilent));
+
+    logger->SetBarrier(headcode::logger::Level::kUndefined);
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kSilent));
+
+    logger->SetBarrier(1000);
+    EXPECT_EQ(logger->GetBarrier(), 1000);
+
+    logger->SetBarrier(-1000);
+    EXPECT_EQ(logger->GetBarrier(), 1000);
+}
+
+
+TEST(Logger, barrier_child) {
+
+    auto logger_foo = headcode::logger::Logger::GetLogger("foo");
+    ASSERT_TRUE(logger_foo != nullptr);
+    EXPECT_STREQ(logger_foo->GetName().c_str(), "foo");
+
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kUndefined));
+
+    logger_foo->SetBarrier(headcode::logger::Level::kDebug);
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
+
+    logger_foo->SetBarrier(headcode::logger::Level::kInfo);
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kInfo));
+
+    logger_foo->SetBarrier(headcode::logger::Level::kWarning);
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kWarning));
+
+    logger_foo->SetBarrier(headcode::logger::Level::kCritical);
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kCritical));
+
+    logger_foo->SetBarrier(headcode::logger::Level::kSilent);
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kSilent));
+
+    logger_foo->SetBarrier(headcode::logger::Level::kUndefined);
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kUndefined));
+
+    logger_foo->SetBarrier(1000);
+    EXPECT_EQ(logger_foo->GetBarrier(), 1000);
+
+    logger_foo->SetBarrier(-1000);
+    EXPECT_EQ(logger_foo->GetBarrier(), static_cast<int>(headcode::logger::Level::kUndefined));
+}
+
+
+TEST(Logger, naming) {
+
+    auto logger = headcode::logger::Logger::GetLogger({});
+    ASSERT_TRUE(logger != nullptr);
 
     EXPECT_EQ(headcode::logger::Logger::GetLogger("."), logger);
     EXPECT_EQ(headcode::logger::Logger::GetLogger(".."), logger);

@@ -14,6 +14,8 @@
 #include <memory>
 #include <string>
 
+#include "level.hpp"
+
 
 /**
  * @brief   The headcode logger namespace
@@ -69,6 +71,8 @@ class Logger {
 
     std::string name_;                        //!< @brief The name of this logger.
     std::list<std::string> ancestors_;        //!< @brief All names of all parent loggers in order.
+    unsigned int id_{0};                      //!< @brief An id of this logger.
+    int barrier_{0};                          //!< @brief Log level barrier (see description).
 
 public:
     /**
@@ -105,10 +109,40 @@ public:
     }
 
     /**
+     * @brief   Gets the log level barrier.
+     *
+     * -1 ==> Forward to parent Logger.
+     *  0 ==> Silently drop.
+     *  1 ==> Only pass Critical events.
+     *  2 ==> Pass Critical and Warning events.
+     *  3 ==> Pass Critical, Warning, and Info events.
+     *  4 ==> Pass Critical, Warning, Info, and Debug events.
+     *
+     * See Level enumeration in level.hpp.
+     *
+     * In general any event with a level 0 > value <= this barrier is passed.
+     * Users are free to define their own log levels and raise the barriers
+     * accordingly.
+     *
+     * @return  The current log level barrier event levels need to pass.
+     */
+    [[nodiscard]] int GetBarrier() const {
+        return barrier_;
+    }
+
+    /**
      * @brief   Gets the time point of birth of the logger subsystem.
      * @return  The time point when the logger subsystem came to live.
      */
     static std::chrono::system_clock::time_point GetBirth();
+
+    /**
+     * @brief   Gets the ID of this logger.
+     * @return  The id ID of this logger.
+     */
+    [[nodiscard]] unsigned int GetId() const {
+        return id_;
+    }
 
     /**
      * @brief   Gets the Logger instance by name.
@@ -128,6 +162,18 @@ public:
      * @return  The name of this logger.
      */
     [[nodiscard]] std::string GetName() const;
+
+    /**
+     * @brief   Sets a new log level barrier (see description of GetBarrier()).
+     * @param   barrier     the new log level barrier for events.
+     */
+    void SetBarrier(int barrier);
+
+    /**
+     * @brief   Sets a new log level barrier (see description of GetBarrier()).
+     * @param   barrier     the new log level barrier for events.
+     */
+    void SetBarrier(Level barrier);
 
 private:
     /**

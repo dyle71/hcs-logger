@@ -176,7 +176,15 @@ std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
     auto lock_write = registry.LockWrite();
     auto iter = registry.loggers_.find(name);
     if (iter == registry.loggers_.end()) {
-        registry.loggers_.emplace(name, std::shared_ptr<Logger>(new Logger{name}));
+
+        auto logger = std::shared_ptr<Logger>(new Logger{name});
+        if (name.empty()) {
+            logger->SetBarrier(Level::kWarning);
+        } else {
+            logger->SetBarrier(Level::kUndefined);
+        }
+
+        registry.loggers_.emplace(name, logger);
     }
 
     return registry.loggers_[name];
@@ -188,4 +196,24 @@ std::string Logger::GetName() const {
         return "<root>";
     }
     return name_;
+}
+
+
+void Logger::SetBarrier(int barrier) {
+
+    if (barrier < -1) {
+        barrier = -1;
+    }
+
+    if (name_.empty() && (barrier < 0)) {
+        // No kUndefined at the root logger.
+        return;
+    }
+
+    barrier_ = barrier;
+}
+
+
+void Logger::SetBarrier(Level barrier) {
+    SetBarrier(static_cast<int>(barrier));
 }
