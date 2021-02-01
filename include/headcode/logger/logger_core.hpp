@@ -15,6 +15,7 @@
 #include <string>
 
 #include "level.hpp"
+#include "sink.hpp"
 
 
 /**
@@ -65,14 +66,16 @@ namespace headcode::logger {
  * all children is kUndefined. ==> Default: allow only critical and warning messages for all loggers.
  *
  *  This is the very first level barrier. The second barrier is at the Sink (see sink.hpp). A logger
- *  may push log messages to a number of sinks.
+ *  may push log messages to a number of sinks. If there is no Sink defined on a Logger instance, then
+ *  all the sinks of the parent logger are used.
  */
 class Logger {
 
-    std::string name_;                        //!< @brief The name of this logger.
-    std::list<std::string> ancestors_;        //!< @brief All names of all parent loggers in order.
-    unsigned int id_{0};                      //!< @brief An id of this logger.
-    int barrier_{0};                          //!< @brief Log level barrier (see description).
+    std::string name_;                              //!< @brief The name of this logger.
+    std::list<std::string> ancestors_;              //!< @brief All names of all parent loggers in order.
+    unsigned int id_{0};                            //!< @brief An id of this logger.
+    int barrier_{0};                                //!< @brief Log level barrier (see description).#
+    std::list<std::shared_ptr<Sink>> sinks_;        //!< @brief All Sinks attached to this logger.
 
 public:
     /**
@@ -99,6 +102,13 @@ public:
      * @brief   Move operator.
      */
     Logger & operator=(Logger &&) = delete;
+
+    /**
+     * @brief   Adds a sink to the sinks of this logger.
+     * If the sink is already in the list, the sink is not added.
+     * @param   sink        the sink to add.
+     */
+    void AddSink(std::shared_ptr<Sink> const & sink);
 
     /**
      * @brief   All the ancestors of this logger in order.
@@ -164,6 +174,14 @@ public:
     [[nodiscard]] std::string GetName() const;
 
     /**
+     * @brief   Gets all the sinks associated with this logger.
+     * @return  All the sinks of this logger.
+     */
+    [[nodiscard]] std::list<std::shared_ptr<Sink>> GetSinks() const {
+        return sinks_;
+    }
+
+    /**
      * @brief   Sets a new log level barrier (see description of GetBarrier()).
      * @param   barrier     the new log level barrier for events.
      */
@@ -174,6 +192,13 @@ public:
      * @param   barrier     the new log level barrier for events.
      */
     void SetBarrier(Level barrier);
+
+    /**
+     * @brief   Sets a single Sink.
+     * This removes any previous sinks at this logger.
+     * @param   sink        the sink to set.
+     */
+    void SetSink(std::shared_ptr<Sink> const & sink);
 
 private:
     /**

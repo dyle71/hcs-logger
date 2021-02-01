@@ -162,6 +162,20 @@ Logger::Logger(std::string name) : name_{std::move(name)} {
 }
 
 
+void Logger::AddSink(std::shared_ptr<Sink> const & sink) {
+
+    bool present = false;
+    for (auto iter = sinks_.begin(); iter != sinks_.end() && !present; ++iter) {
+        present = (*iter) == sink;
+    }
+    if (present) {
+        return;
+    }
+
+    sinks_.push_back(sink);
+}
+
+
 std::chrono::system_clock::time_point Logger::GetBirth() {
     auto const & registry = GetRegistryInstance();
     return registry.birth_;
@@ -216,4 +230,10 @@ void Logger::SetBarrier(int barrier) {
 
 void Logger::SetBarrier(Level barrier) {
     SetBarrier(static_cast<int>(barrier));
+}
+
+
+void Logger::SetSink(std::shared_ptr<Sink> const & sink) {
+    sinks_.clear();
+    sinks_.push_back(sink);
 }

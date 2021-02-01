@@ -34,6 +34,34 @@ TEST(Logger, regular) {
 }
 
 
+TEST(Logger, sinks) {
+
+    auto logger = headcode::logger::Logger::GetLogger({});
+    ASSERT_TRUE(logger != nullptr);
+    EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+
+    EXPECT_EQ(logger->GetSinks().size(), 0u);
+    logger->AddSink(std::make_shared<headcode::logger::Sink>());
+    EXPECT_EQ(logger->GetSinks().size(), 1u);
+    logger->AddSink(std::make_shared<headcode::logger::Sink>());
+    EXPECT_EQ(logger->GetSinks().size(), 2u);
+    auto sinks = logger->GetSinks();
+    EXPECT_EQ(sinks.size(), 2u);
+    sinks.clear();
+    EXPECT_EQ(sinks.size(), 0u);
+    EXPECT_EQ(logger->GetSinks().size(), 2u);
+
+    logger->SetSink(std::make_shared<headcode::logger::Sink>());
+    EXPECT_EQ(logger->GetSinks().size(), 1u);
+
+    auto sink = std::make_shared<headcode::logger::Sink>();
+    logger->AddSink(sink);
+    EXPECT_EQ(logger->GetSinks().size(), 2u);
+    logger->AddSink(sink);
+    EXPECT_EQ(logger->GetSinks().size(), 2u);
+}
+
+
 TEST(Logger, barrier_root) {
 
     auto logger = headcode::logger::Logger::GetLogger({});
