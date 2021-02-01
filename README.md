@@ -3,6 +3,56 @@
 This C++17 library is very much like log4c++. Yet, hcs-logger strives to be minimal and concise 
 with no further dependencies.
 
+Features:
+
+* Differentiate between log sources or systems and turn each on or off
+
+E.g. you might have a system "network" and "database" in your code base. Seen
+from hcs-logger these are all different `Logger` instances.
+
+Example:
+```c++
+// turn off all messages from "network"
+headcode::logger::GetLogger("network")->SetBarrier(headcode::logger::Level::kSilent);
+// ... but turn all message from "database" on:
+headcode::logger::GetLogger("database")->SetBarrier(headcode::logger::Level::kDebug);
+...
+// This will not be shown
+headcode::logger::Debug("network") << "Got a debug message while doing network stuff...";
+// This will be printed
+headcode::logger::Debug("database") << "Doing database stuff now...";
+```
+
+* Loggers (aka logging subsystems) are hierarchical ordered with the dot `.` delimiter.
+
+Example: turn off each and every message but warnings and critical, yet also debug for a subsystem:
+```c++
+headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kWarning);
+headcode::logger::GetLogger("app.network")->SetBarrier(headcode::logger::Level::kSilent);
+headcode::logger::GetLogger("app.network.incoming")->SetBarrier(headcode::logger::Level::kDebug);
+```
+
+* Loggers can have any numbers of sinks associated with additional barriers.
+
+Example: different log levels for different outputs:
+```c++
+// logfile: "my_app.log" (but only info, warnings and errors)
+auto file_sink = std::make_shared<headcode::logger::FileSink>("my_app.log");
+file_sink->SetBarrier(headcode::logger::Level::kInfo);
+// and log to stderr too (including debug stuff)
+auto console_sink = std::make_shared<headcode::logger::FileSink>("my_app.log");
+console_sink->SetBarrier(headcode::logger::Level::kDebug);
+
+// set sink: only 1 sink
+headcode::logger::GetLogger()->SetSink(file_sink);
+// add sink: add another one
+headcode::logger::GetLogger()->AddSink(console_sink);
+// set allowed maximum log level, before passing on to sinks
+headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
+```
+
+* Different formatting for different sinks (e.g. console, file, syslog, ...)
+
 
 ## Philosophy
 
