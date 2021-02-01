@@ -7,3 +7,5 @@
 # ------------------------------------------------------------
 
 add_subdirectory(file_logging)
+add_subdirectory(hello_world_debug)
+add_subdirectory(hello_world_warning)

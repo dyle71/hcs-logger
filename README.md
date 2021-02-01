@@ -53,6 +53,34 @@ headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
 
 * Different formatting for different sinks (e.g. console, file, syslog, ...)
 
+**BUT** usually the whole thing stays out of the way. On default only `Critical`
+and `Warning` are enabled. So this is totally sufficient:
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    Warning() << "Hello World!";
+    return 0;
+}
+```
+
+To enable debug messages right from the start:
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    Logger::GetLogger()->SetBarrier(Level::kDebug);
+    Debug() << "Hello World!";
+    return 0;
+}
+```
+
 
 ## Philosophy
 
