@@ -112,6 +112,40 @@ static std::list<std::string> CreateListOfAncestors(std::string name) {
     return res;
 }
 
+/**
+ * @brief   Examine a logger name and make some corrections.
+ * @param   name        the name provided by the user.
+ * @return  The fixed name to be used inside here in the registry.
+ */
+std::string FixLoggerName(std::string name) {
+
+    if (name.empty()) {
+        return name;
+    }
+    if (name == "<root>") {
+        return std::string{};
+    }
+
+    auto double_dots = name.find("..");
+    while (double_dots != std::string::npos) {
+        name.replace(double_dots, 2, ".");
+        double_dots = name.find("..");
+    }
+
+    size_t left = 0;
+    size_t right = name.size();
+    while ((left < name.size()) && (name[left] == '.')) {
+        ++left;
+    }
+    while ((right > left) && (name[right - 1] == '.')) {
+        --right;
+    }
+
+    name = name.substr(left, right - left);
+
+    return name;
+}
+
 
 /**
  * @brief   Returns the Registry singleton.
@@ -136,19 +170,7 @@ std::chrono::system_clock::time_point Logger::GetBirth() {
 
 std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
 
-    if (name == "<root>") {
-        name = std::string{};
-    }
-
-    auto left = name.find_first_not_of('.');
-    if ((left != std::string::npos) && (left != 0)) {
-        name = name.substr(left);
-    }
-    auto right = name.find_last_not_of('.');
-    if ((right != std::string::npos) && (right != name.size() - 1)) {
-        name = name.substr(0, right + 1);
-    }
-
+    name = FixLoggerName(name);
     auto & registry = GetRegistryInstance();
 
     auto lock_write = registry.LockWrite();

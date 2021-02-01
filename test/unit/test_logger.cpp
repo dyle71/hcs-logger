@@ -37,6 +37,26 @@ TEST(Logger, regular) {
     EXPECT_EQ(headcode::logger::Logger::GetLogger(".foo."), logger_foo);
     EXPECT_EQ(headcode::logger::Logger::GetLogger("..foo.."), logger_foo);
     EXPECT_EQ(headcode::logger::Logger::GetLogger("...foo..."), logger_foo);
+
+    auto logger_foo_bar = headcode::logger::Logger::GetLogger("foo.bar");
+    ASSERT_TRUE(logger_foo_bar != nullptr);
+    EXPECT_STREQ(logger_foo_bar->GetName().c_str(), "foo.bar");
+
+    EXPECT_EQ(headcode::logger::Logger::GetLogger(".foo.bar"), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("..foo.bar"), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("...foo.bar"), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("foo.bar."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("foo.bar.."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("foo.bar..."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger(".foo.bar."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("..foo.bar.."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("...foo.bar..."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("foo..bar"), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("foo...bar"), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("foo.....bar"), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger(".foo..bar."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("..foo..bar.."), logger_foo_bar);
+    EXPECT_EQ(headcode::logger::Logger::GetLogger("......foo......bar......"), logger_foo_bar);
 }
 
 
