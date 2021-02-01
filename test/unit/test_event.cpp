@@ -21,10 +21,10 @@ TEST(Event, empty) {
 TEST(Event, regular) {
 
     auto event = headcode::logger::Event{headcode::logger::Level::kInfo};
-    event << "The quick brown fox jumped over the lazy dog.";
+    event << "The quick brown fox jumped over the lazy dog." << std::endl;
 
     EXPECT_EQ(event.GetLevel(), static_cast<int>(headcode::logger::Level::kInfo));
-    EXPECT_STREQ(event.GetMessage().c_str(), "The quick brown fox jumped over the lazy dog.");
+    EXPECT_STREQ(event.GetMessage().c_str(), "The quick brown fox jumped over the lazy dog.\n");
     EXPECT_EQ(event.GetLogger(), headcode::logger::Logger::GetLogger());
     EXPECT_GT(event.GetAge().count(), 0);
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(event.GetTimePoint().time_since_epoch());

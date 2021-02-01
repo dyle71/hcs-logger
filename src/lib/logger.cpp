@@ -7,6 +7,7 @@
  */
 
 #include <headcode/logger/logger_core.hpp>
+#include <headcode/logger/sink.hpp>
 
 #include <map>
 #include <shared_mutex>
@@ -201,6 +202,7 @@ std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
 
         auto logger = std::shared_ptr<Logger>(new Logger{name});
         if (name.empty()) {
+            logger->SetSink(std::make_shared<ConsoleSink>());
             logger->SetBarrier(Level::kWarning);
         } else {
             logger->SetBarrier(Level::kUndefined);
@@ -245,13 +247,26 @@ void Logger::Log(Event const & event) {
     ++events_logged_;
 
     if (GetBarrier() > 0) {
-        for (auto & sink : sinks_) {
-            sink->Log(event);
-        }
+        Push(event);
     } else {
         auto parent = GetParentLogger();
         if (parent) {
             parent->Log(event);
+        }
+    }
+}
+
+
+void Logger::Push(Event const & event) {
+
+    if (sinks_.empty()) {
+        auto parent = GetParentLogger();
+        if (parent) {
+            parent->Push(event);
+        }
+    } else {
+        for (auto & sink : sinks_) {
+            sink->Log(event);
         }
     }
 }
@@ -277,7 +292,7 @@ void Logger::SetBarrier(Level barrier) {
 }
 
 
-void Logger::SetSink(std::shared_ptr<Sink> const & sink) {
+void Logger::SetSink(std::shared_ptr<Sink> sink) {
     sinks_.clear();
     sinks_.push_back(sink);
 }

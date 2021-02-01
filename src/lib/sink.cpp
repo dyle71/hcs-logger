@@ -8,6 +8,7 @@
 
 #include <headcode/logger/sink.hpp>
 
+#include <iostream>
 #include <fstream>
 #include <utility>
 
@@ -57,4 +58,10 @@ void FileSink::Log_(Event const & event) {
     stream.open(filename_, std::ios::out | std::ios::app);
     stream << Format(event);
     stream.flush();
+}
+
+
+void ConsoleSink::Log_(Event const & event) {
+    std::cerr << Format(event);
+    std::cerr.flush();
 }

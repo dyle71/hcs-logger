@@ -49,16 +49,16 @@ TEST(Logger, sinks) {
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
 
-    EXPECT_EQ(logger->GetSinks().size(), 0u);
-    logger->AddSink(std::make_shared<headcode::logger::NullSink>());
     EXPECT_EQ(logger->GetSinks().size(), 1u);
     logger->AddSink(std::make_shared<headcode::logger::NullSink>());
     EXPECT_EQ(logger->GetSinks().size(), 2u);
+    logger->AddSink(std::make_shared<headcode::logger::NullSink>());
+    EXPECT_EQ(logger->GetSinks().size(), 3u);
     auto sinks = logger->GetSinks();
-    EXPECT_EQ(sinks.size(), 2u);
+    EXPECT_EQ(sinks.size(), 3u);
     sinks.clear();
     EXPECT_EQ(sinks.size(), 0u);
-    EXPECT_EQ(logger->GetSinks().size(), 2u);
+    EXPECT_EQ(logger->GetSinks().size(), 3u);
 
     logger->SetSink(std::make_shared<headcode::logger::NullSink>());
     EXPECT_EQ(logger->GetSinks().size(), 1u);

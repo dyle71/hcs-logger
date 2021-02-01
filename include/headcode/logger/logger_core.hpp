@@ -68,6 +68,8 @@ namespace headcode::logger {
  *  This is the very first level barrier. The second barrier is at the Sink (see sink.hpp). A logger
  *  may push log messages to a number of sinks. If there is no Sink defined on a Logger instance, then
  *  all the sinks of the parent logger are used.
+ *
+ *  The root logger has the ConsoleSink as default.
  */
 class Logger {
 
@@ -220,7 +222,7 @@ public:
      * This removes any previous sinks at this logger.
      * @param   sink        the sink to set.
      */
-    void SetSink(std::shared_ptr<Sink> const & sink);
+    void SetSink(std::shared_ptr<Sink> sink);
 
 private:
     /**
@@ -228,6 +230,13 @@ private:
      * @param   name            the name of the logger.
      */
     explicit Logger(std::string name);
+
+    /**
+     * @brief   Pushed the given event to a sink.
+     * The event has already passed the barrier.
+     * @param   event       the event to push.
+     */
+    void Push(Event const & event);
 };
 
 

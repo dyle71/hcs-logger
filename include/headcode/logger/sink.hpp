@@ -189,6 +189,20 @@ private:
 };
 
 
+/**
+ * @brief   Pushes all log messages to stderr.
+ */
+class ConsoleSink : public Sink {
+
+private:
+    /**
+     * @brief   This does the actual logging.
+     * @param   event       the event to log.
+     */
+    void Log_(Event const & event) override;
+};
+
+
 }
 
 
