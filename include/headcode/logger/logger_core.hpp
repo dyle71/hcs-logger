@@ -199,6 +199,14 @@ public:
     }
 
     /**
+     * @brief   Checks if this logger is the root logger.
+     * @return  True, if it is.
+     */
+    [[nodiscard]] bool IsRootLogger() const {
+        return name_.empty();
+    }
+
+    /**
      * @brief   Logs an event.
      * This is the real logging procedure.
      * @param   event       the event to log.

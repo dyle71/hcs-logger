@@ -9,6 +9,7 @@
 #ifndef HEADCODE_SPACE_LOGGER_FORMATTER_HPP
 #define HEADCODE_SPACE_LOGGER_FORMATTER_HPP
 
+#include <list>
 #include <string>
 
 #include "event.hpp"
@@ -58,6 +59,27 @@ public:
     Formatter & operator=(Formatter &&) = default;
 
     /**
+     * @brief   Creates the level string from the given event.
+     * @param   event       the log event.
+     * @return  A string depicting the level.
+     */
+    static std::string CreateLevelString(Event const & event);
+
+    /**
+     * @brief   Creates the logger string from the given event.
+     * @param   event       the log event.
+     * @return  A string depicting the logger (the associated event source).
+     */
+    static std::string CreateLoggerString(Event const & event);
+
+    /**
+     * @brief   Creates the time string from the given event.
+     * @param   event       the log event.
+     * @return  A string holding the time.
+     */
+    static std::string CreateTimeString(Event const & event);
+
+    /**
      * @brief   Formats the log event of type T to produce the final log string.
      * @param   event       the log event to format.
      * @return  A string drawn from that log event.
@@ -65,6 +87,14 @@ public:
     std::string Format(Event const & event) {
         return Format_(event);
     }
+
+    /**
+     * @brief   Split the message into lines.
+     * @param   message     the message.
+     * @return  The message split into lines.
+     */
+    static std::list<std::string> SplitMessageIntoLines(std::string const & message);
+
 
 private:
     /**
@@ -79,7 +109,7 @@ private:
 /**
  * @brief   A formatter which pushes the plain string of the event.
  */
-class StringFormatter : public Formatter {
+class SimpleFormatter : public Formatter {
 
 private:
     /**
@@ -90,6 +120,21 @@ private:
     std::string Format_(Event const & event) override {
         return event.GetMessage();
     }
+};
+
+
+/**
+ * @brief   The standard formatter used.
+ */
+class StandardFormatter : public Formatter {
+
+private:
+    /**
+     * @brief   The detailed formatter function to reimplement in derived classes.
+     * @param   event           the log event data.
+     * @return  The string to push to the Sink instance.
+     */
+    std::string Format_(Event const & event) override;
 };
 
 

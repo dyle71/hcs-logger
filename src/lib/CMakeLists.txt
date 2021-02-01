@@ -9,6 +9,7 @@
 
 set(LOGGER_SRC
     event.cpp
+    formatter.cpp
     level.cpp
     logger.cpp
     sink.cpp

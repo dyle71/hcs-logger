@@ -118,7 +118,7 @@ private:
 
 
 /**
- * @brief   A sink which sends consumes all events and does not do nothing.
+ * @brief   A sink which consumes all events and does not do anything at all with it.
  */
 class NullSink : public Sink {
 
