@@ -11,6 +11,7 @@ set(LOGGER_SRC
     event.cpp
     level.cpp
     logger.cpp
+    sink.cpp
 )
 
 add_library(hcs-logger STATIC ${LOGGER_SRC})

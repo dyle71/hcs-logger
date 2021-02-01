@@ -18,8 +18,15 @@ TEST(Logger, empty) {
     EXPECT_EQ(logger->GetId(), 0u);
 }
 
+#ifdef DEBUG
+
+// Since we are operating on the very same logger subsystem, we need fresh instances in the tests.
+extern void LoggerRegistryPurge();
+
 
 TEST(Logger, regular) {
+
+    LoggerRegistryPurge();
 
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
@@ -35,6 +42,8 @@ TEST(Logger, regular) {
 
 
 TEST(Logger, sinks) {
+
+    LoggerRegistryPurge();
 
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
@@ -62,7 +71,40 @@ TEST(Logger, sinks) {
 }
 
 
+TEST(Logger, parenting) {
+
+    LoggerRegistryPurge();
+
+    auto logger = headcode::logger::Logger::GetLogger({});
+    ASSERT_TRUE(logger != nullptr);
+    EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+
+    auto logger_foo_bar_baz = headcode::logger::Logger::GetLogger("foo.bar.baz");
+    ASSERT_TRUE(logger_foo_bar_baz != nullptr);
+    EXPECT_STREQ(logger_foo_bar_baz->GetName().c_str(), "foo.bar.baz");
+
+    EXPECT_EQ(logger, logger_foo_bar_baz->GetParentLogger());
+
+    auto logger_foo_bar = headcode::logger::Logger::GetLogger("foo.bar");
+    ASSERT_TRUE(logger_foo_bar != nullptr);
+    EXPECT_STREQ(logger_foo_bar->GetName().c_str(), "foo.bar");
+
+    EXPECT_EQ(logger, logger_foo_bar->GetParentLogger());
+    EXPECT_EQ(logger_foo_bar, logger_foo_bar_baz->GetParentLogger());
+
+    auto logger_foo = headcode::logger::Logger::GetLogger("foo");
+    ASSERT_TRUE(logger_foo != nullptr);
+    EXPECT_STREQ(logger_foo->GetName().c_str(), "foo");
+
+    EXPECT_EQ(logger, logger_foo->GetParentLogger());
+    EXPECT_EQ(logger_foo, logger_foo_bar->GetParentLogger());
+    EXPECT_EQ(logger_foo_bar, logger_foo_bar_baz->GetParentLogger());
+}
+
+
 TEST(Logger, barrier_root) {
+
+    LoggerRegistryPurge();
 
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
@@ -98,6 +140,8 @@ TEST(Logger, barrier_root) {
 
 TEST(Logger, barrier_child) {
 
+    LoggerRegistryPurge();
+
     auto logger_foo = headcode::logger::Logger::GetLogger("foo");
     ASSERT_TRUE(logger_foo != nullptr);
     EXPECT_STREQ(logger_foo->GetName().c_str(), "foo");
@@ -131,6 +175,8 @@ TEST(Logger, barrier_child) {
 
 
 TEST(Logger, naming) {
+
+    LoggerRegistryPurge();
 
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
@@ -178,6 +224,8 @@ TEST(Logger, naming) {
 
 TEST(Logger, same_instance) {
 
+    LoggerRegistryPurge();
+
     auto logger_root_1 = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger_root_1 != nullptr);
     EXPECT_STREQ(logger_root_1->GetName().c_str(), "<root>");
@@ -219,6 +267,8 @@ TEST(Logger, same_instance) {
 
 TEST(Logger, ancestors) {
 
+    LoggerRegistryPurge();
+
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
@@ -255,3 +305,5 @@ TEST(Logger, ancestors) {
     std::list<std::string> ancestors_bar_baz = {"bar", ""};
     EXPECT_TRUE(logger_bar_baz->GetAncestors() == ancestors_bar_baz);
 }
+
+#endif

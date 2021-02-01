@@ -7,7 +7,6 @@
  */
 
 #include <array>
-#include <cassert>
 
 #include <headcode/logger/level.hpp>
 

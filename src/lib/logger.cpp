@@ -157,6 +157,14 @@ static Registry & GetRegistryInstance() {
 }
 
 
+#ifdef DEBUG
+void LoggerRegistryPurge() {
+    auto & registry = GetRegistryInstance();
+    registry.loggers_.clear();
+}
+#endif
+
+
 Logger::Logger(std::string name) : name_{std::move(name)} {
     ancestors_ = CreateListOfAncestors(name_);
 }
@@ -210,6 +218,42 @@ std::string Logger::GetName() const {
         return "<root>";
     }
     return name_;
+}
+
+
+std::shared_ptr<Logger> Logger::GetParentLogger() const {
+
+    if (name_.empty()) {
+        return nullptr;
+    }
+
+    auto & registry = GetRegistryInstance();
+    auto lock_read = registry.LockRead();
+    for (auto const & name : ancestors_) {
+        auto iter = registry.loggers_.find(name);
+        if (iter != registry.loggers_.end()) {
+            return iter->second;
+        }
+    }
+
+    return nullptr;
+}
+
+
+void Logger::Log(Event const & event) {
+
+    ++events_logged_;
+
+    if (GetBarrier() > 0) {
+        for (auto & sink: sinks_) {
+            sink->Log(event);
+        }
+    } else {
+        auto parent = GetParentLogger();
+        if (parent) {
+            parent->Log(event);
+        }
+    }
 }
 
 

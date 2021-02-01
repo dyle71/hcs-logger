@@ -8,8 +8,10 @@
 
 
 #include <headcode/logger/event.hpp>
-#include <headcode/logger/logger_core.hpp>
+
 #include <utility>
+
+#include <headcode/logger/logger_core.hpp>
 
 using namespace headcode::logger;
 

@@ -76,6 +76,7 @@ class Logger {
     unsigned int id_{0};                            //!< @brief An id of this logger.
     int barrier_{0};                                //!< @brief Log level barrier (see description).#
     std::list<std::shared_ptr<Sink>> sinks_;        //!< @brief All Sinks attached to this logger.
+    std::uint64_t events_logged_{0};                //!< @brief Number of events logged so far.
 
 public:
     /**
@@ -147,6 +148,14 @@ public:
     static std::chrono::system_clock::time_point GetBirth();
 
     /**
+     * @brief   Returns the number of events logged so far.
+     * @return  The amount of events which passed this logger instance.
+     */
+    [[nodiscard]] std::uint64_t GetEventsLogged() const {
+        return events_logged_;
+    }
+
+    /**
      * @brief   Gets the ID of this logger.
      * @return  The id ID of this logger.
      */
@@ -168,6 +177,12 @@ public:
     static std::shared_ptr<Logger> GetLogger(std::string name = {});
 
     /**
+     * @brief   Gets the next known parent logger.
+     * @return  The next known, registered parent logger.
+     */
+    std::shared_ptr<Logger> GetParentLogger() const;
+
+    /**
      * @brief   Returns the name of this logger instance.
      * @return  The name of this logger.
      */
@@ -180,6 +195,13 @@ public:
     [[nodiscard]] std::list<std::shared_ptr<Sink>> GetSinks() const {
         return sinks_;
     }
+
+    /**
+     * @brief   Logs an event.
+     * This is the real logging procedure.
+     * @param   event       the event to log.
+     */
+    void Log(Event const & event);
 
     /**
      * @brief   Sets a new log level barrier (see description of GetBarrier()).

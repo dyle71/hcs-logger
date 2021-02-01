@@ -116,6 +116,11 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     message(STATUS "Turning on compiler command export for CLang: ${CMAKE_BINARY_DIR}/compile_commands.json")
 endif ()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_definitions("DEBUG")
+endif ()
+
+
 # ---- callgrind integration ----
 
 option(CALLGRIND_ENABLED "enable callgrind" off)
