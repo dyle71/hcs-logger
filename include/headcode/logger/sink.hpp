@@ -245,7 +245,6 @@ class ConsoleSink : public Sink {
 public:
     /**
      * @brief   Constructs a sink which pushes the log messages into a stream.
-     * @param   filename        Name of the file to write to.
      */
     explicit ConsoleSink();
 
