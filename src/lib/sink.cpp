@@ -12,15 +12,20 @@
 #include <fstream>
 #include <utility>
 
+#include <headcode/logger/formatter.hpp>
+
 using namespace headcode::logger;
 
 
 std::mutex headcode::logger::ConsoleSink::console_mutex_;
 
 
+Sink::Sink() : formatter_{std::make_shared<StandardFormatter>()} {
+}
+
+
 std::string Sink::Format(Event const & event) {
-    // TODO: Apply formatter here.
-    return event.str();
+    return formatter_->Format(event);
 }
 
 
@@ -44,6 +49,12 @@ void Sink::SetBarrier(int barrier) {
     barrier_ = barrier;
 }
 
+
+void Sink::SetFormatter(std::shared_ptr<Formatter> const & formatter) {
+    if (formatter != nullptr) {
+        formatter_ = formatter;
+    }
+}
 
 void Sink::SetBarrier(Level barrier) {
     SetBarrier(static_cast<int>(barrier));

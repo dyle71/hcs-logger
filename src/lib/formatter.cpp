@@ -18,23 +18,15 @@ using namespace headcode::logger;
 
 std::string Formatter::CreateLevelString(Event const & event) {
 
-    static std::map<Level, std::string> const level_strings = {
-            {Level::kUndefined, "(" + GetLevelText(Level::kUndefined) + ")"},
-            {Level::kSilent, "(" + GetLevelText(Level::kSilent) + ")"},
-            {Level::kCritical, "(" + GetLevelText(Level::kCritical) + ")"},
-            {Level::kWarning, "(" + GetLevelText(Level::kWarning) + ")"},
-            {Level::kInfo, "(" + GetLevelText(Level::kInfo) + ")"},
-            {Level::kDebug, "(" + GetLevelText(Level::kDebug) + ")"}};
-
     // users may issue any number beyond debug --> cap those to "debug".
     auto level = static_cast<Level>(std::min<int>(event.GetLevel(), static_cast<int>(Level::kDebug)));
-    auto iter = level_strings.find(level);
-    if (iter == level_strings.end()) {
-        // This should not happen
-        return "BUG!";
-    }
 
-    return iter->second;
+    std::string res;
+    res.resize(32);
+    snprintf(res.data(), 32, "(%-8s)", GetLevelText(level).data());
+    res.resize(res.find_last_of(')') + 1);
+
+    return res;
 }
 
 

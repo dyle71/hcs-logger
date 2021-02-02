@@ -66,19 +66,19 @@ TEST(Formatter, time_string) {
 TEST(Formatter, level_string) {
 
     headcode::logger::Debug debug;
-    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(debug).c_str(), "(debug)");
+    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(debug).c_str(), "(debug   )");
 
     headcode::logger::Info info;
-    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(info).c_str(), "(info)");
+    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(info).c_str(), "(info    )");
 
     headcode::logger::Warning warning;
-    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(warning).c_str(), "(warning)");
+    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(warning).c_str(), "(warning )");
 
     headcode::logger::Critical critical;
     EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(critical).c_str(), "(critical)");
 
     headcode::logger::Event event{1000};
-    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(event).c_str(), "(debug)");
+    EXPECT_STREQ(headcode::logger::Formatter::CreateLevelString(event).c_str(), "(debug   )");
 }
 
 

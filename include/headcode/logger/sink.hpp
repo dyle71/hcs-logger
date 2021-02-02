@@ -21,6 +21,10 @@
 namespace headcode::logger {
 
 
+// fwd
+class Formatter;
+
+
 /**
  * @brief   A sink is the place all the log message go to: a file, the console, syslog...
  * A sink barrier is set to Level::kDebug on default, meaning that it would
@@ -29,12 +33,13 @@ namespace headcode::logger {
 class Sink {
 
     int barrier_{static_cast<int>(Level::kDebug)};        //!< @brief Log level barrier (see description).
+    std::shared_ptr<Formatter> formatter_;                //!< @brief The formatter used for this sink.
 
 public:
     /**
      * @brief   Constructor
      */
-    Sink() = default;
+    Sink();
 
     /**
      * @brief   Copy constructor
@@ -96,6 +101,14 @@ public:
     [[nodiscard]] std::string GetDescription() const;
 
     /**
+     * @brief   Returns the formatter of this sink.
+     * @return  The Formatter instance of this link.
+     */
+    [[nodiscard]] std::shared_ptr<Formatter> GetFormatter() const {
+        return formatter_;
+    }
+
+    /**
      * @brief   The event to log.
      * @param   event       the event to log.
      */
@@ -112,6 +125,12 @@ public:
      * @param   barrier     the new log level barrier for events.
      */
     void SetBarrier(Level barrier);
+
+    /**
+     * @brief   Returns the formatter of this sink.
+     * @return  The Formatter instance of this link.
+     */
+    void SetFormatter(std::shared_ptr<Formatter> const & formatter);
 
 private:
     /**

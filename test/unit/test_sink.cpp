@@ -54,6 +54,7 @@ TEST(Sink, file) {
 
     {
         auto sink = std::make_shared<headcode::logger::FileSink>("test.log");
+        sink->SetFormatter(std::make_shared<headcode::logger::SimpleFormatter>());
 
         auto event_debug = headcode::logger::Debug();
         event_debug << "This is a debug message." << std::endl;
@@ -102,4 +103,60 @@ TEST(Sink, description) {
     auto console_sink = headcode::logger::ConsoleSink{};
     ASSERT_FALSE(console_sink.GetDescription().empty());
     EXPECT_STREQ(console_sink.GetDescription().c_str(), "ConsoleSink");
+}
+
+
+TEST(Sink, fomatters) {
+
+    auto a_sink = std::make_shared<headcode::logger::FileSink>("a.log");
+
+    EXPECT_NE(a_sink->GetFormatter(), nullptr);
+    a_sink->SetFormatter(nullptr);
+    EXPECT_NE(a_sink->GetFormatter(), nullptr);
+    auto a_formatter = std::make_shared<headcode::logger::StandardFormatter>();
+    a_sink->SetFormatter(a_formatter);
+    EXPECT_EQ(a_sink->GetFormatter(), a_formatter);
+}
+
+
+TEST(Sink, multiple) {
+
+    for (auto const & filename : {"a.log", "b.log", "c.log", "d.log", "e.log", "f.log"}) {
+        if (std::filesystem::exists(filename)) {
+            std::filesystem::remove(filename);
+        }
+    }
+
+    auto a_sink = std::make_shared<headcode::logger::FileSink>("a.log");
+    auto b_sink = std::make_shared<headcode::logger::FileSink>("b.log");
+    auto c_sink = std::make_shared<headcode::logger::FileSink>("c.log");
+    auto d_sink = std::make_shared<headcode::logger::FileSink>("d.log");
+    auto e_sink = std::make_shared<headcode::logger::FileSink>("e.log");
+
+    auto logger = headcode::logger::Logger::GetLogger();
+    logger->SetSink(a_sink);
+    logger->AddSink(b_sink);
+    logger->AddSink(c_sink);
+    logger->AddSink(d_sink);
+    logger->AddSink(e_sink);
+
+    logger->SetBarrier(headcode::logger::Level::kDebug);
+    EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
+
+    a_sink->SetBarrier(headcode::logger::Level::kDebug);
+    EXPECT_EQ(a_sink->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
+    b_sink->SetBarrier(headcode::logger::Level::kInfo);
+    EXPECT_EQ(b_sink->GetBarrier(), static_cast<int>(headcode::logger::Level::kInfo));
+    c_sink->SetBarrier(headcode::logger::Level::kWarning);
+    EXPECT_EQ(c_sink->GetBarrier(), static_cast<int>(headcode::logger::Level::kWarning));
+    d_sink->SetBarrier(headcode::logger::Level::kCritical);
+    EXPECT_EQ(d_sink->GetBarrier(), static_cast<int>(headcode::logger::Level::kCritical));
+    e_sink->SetBarrier(headcode::logger::Level::kSilent);
+    EXPECT_EQ(e_sink->GetBarrier(), static_cast<int>(headcode::logger::Level::kSilent));
+
+    headcode::logger::Debug() << "This is a debug message.";
+    headcode::logger::Info() << "This is an info message.";
+    headcode::logger::Warning() << "This is a warning message.";
+    headcode::logger::Critical() << "This is a critical message.";
+    headcode::logger::Event(headcode::logger::Level::kSilent) << "This is a silent message.";
 }
