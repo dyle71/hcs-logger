@@ -87,3 +87,19 @@ TEST(Sink, file) {
 
     log_in.close();
 }
+
+
+TEST(Sink, description) {
+
+    auto null_sink = headcode::logger::NullSink{};
+    ASSERT_FALSE(null_sink.GetDescription().empty());
+    EXPECT_STREQ(null_sink.GetDescription().c_str(), "NullSink");
+
+    auto file_sink = headcode::logger::FileSink{};
+    ASSERT_FALSE(file_sink.GetDescription().empty());
+    EXPECT_STREQ(file_sink.GetDescription().c_str(), "FileSink to a.log");
+
+    auto console_sink = headcode::logger::ConsoleSink{};
+    ASSERT_FALSE(console_sink.GetDescription().empty());
+    EXPECT_STREQ(console_sink.GetDescription().c_str(), "ConsoleSink");
+}

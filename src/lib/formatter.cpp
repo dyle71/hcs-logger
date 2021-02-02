@@ -26,6 +26,7 @@ std::string Formatter::CreateLevelString(Event const & event) {
             {Level::kInfo, "(" + GetLevelText(Level::kInfo) + ")"},
             {Level::kDebug, "(" + GetLevelText(Level::kDebug) + ")"}};
 
+    // users may issue any number beyond debug --> cap those to "debug".
     auto level = static_cast<Level>(std::min<int>(event.GetLevel(), static_cast<int>(Level::kDebug)));
     auto iter = level_strings.find(level);
     if (iter == level_strings.end()) {
@@ -77,11 +78,6 @@ std::string Formatter::CreateTimeString(Event const & event) {
 }
 
 
-/**
- * @brief   Split the message into lines.
- * @param   message     the message.
- * @return  The message split into lines.
- */
 std::list<std::string> Formatter::SplitMessageIntoLines(std::string const & message) {
 
     std::list<std::string> res;

@@ -9,7 +9,7 @@
 #ifndef HEADCODE_SPACE_LOGGER_SINK_HPP
 #define HEADCODE_SPACE_LOGGER_SINK_HPP
 
-#include <ostream>
+#include <mutex>
 
 #include "event.hpp"
 #include "level.hpp"
@@ -90,6 +90,12 @@ public:
     }
 
     /**
+     * @brief   Gets the sink description.
+     * @return  A human readable description of this sink.
+     */
+    [[nodiscard]] std::string GetDescription() const;
+
+    /**
      * @brief   The event to log.
      * @param   event       the event to log.
      */
@@ -109,6 +115,12 @@ public:
 
 private:
     /**
+     * @brief   Gets the sink description.
+     * @return  A human readable description of this sink.
+     */
+    virtual std::string GetDescription_() const = 0;
+
+    /**
      * @brief   This does the actual logging.
      * The event passed in is valid to be logged.
      * @param   event       the event to log.
@@ -123,6 +135,14 @@ private:
 class NullSink : public Sink {
 
 private:
+    /**
+     * @brief   Gets the sink description.
+     * @return  A human readable description of this sink.
+     */
+    [[nodiscard]] std::string GetDescription_() const override {
+        return "NullSink";
+    }
+
     /**
      * @brief   This does the actual logging.
      * @param   event       the event to log.
@@ -172,6 +192,7 @@ private:
 class FileSink : public Sink {
 
     std::string filename_;      //!< @brief The name of the file to write to.
+    std::mutex mutex_;          //!< @brief mutex to write to file.
 
 public:
     /**
@@ -181,6 +202,12 @@ public:
     explicit FileSink(std::string filename = {});
 
 private:
+    /**
+     * @brief   Gets the sink description.
+     * @return  A human readable description of this sink.
+     */
+    [[nodiscard]] std::string GetDescription_() const override;
+
     /**
      * @brief   This does the actual logging.
      * @param   event       the event to log.
@@ -194,7 +221,15 @@ private:
  */
 class ConsoleSink : public Sink {
 
+    static std::mutex console_mutex_;        //!< @brief mutex to write to console.
+
 private:
+    /**
+     * @brief   Gets the sink description.
+     * @return  A human readable description of this sink.
+     */
+    [[nodiscard]] std::string GetDescription_() const override;
+
     /**
      * @brief   This does the actual logging.
      * @param   event       the event to log.

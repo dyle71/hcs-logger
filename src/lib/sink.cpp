@@ -15,9 +15,17 @@
 using namespace headcode::logger;
 
 
+std::mutex headcode::logger::ConsoleSink::console_mutex_;
+
+
 std::string Sink::Format(Event const & event) {
     // TODO: Apply formatter here.
     return event.str();
+}
+
+
+std::string Sink::GetDescription() const {
+    return GetDescription_();
 }
 
 
@@ -53,7 +61,13 @@ FileSink::FileSink(std::string filename) : Sink{}, filename_{std::move(filename)
 }
 
 
+std::string FileSink::GetDescription_() const {
+    return std::string{"FileSink to "} + filename_;
+}
+
+
 void FileSink::Log_(Event const & event) {
+    std::lock_guard<std::mutex> lock{mutex_};
     std::ofstream stream;
     stream.open(filename_, std::ios::out | std::ios::app);
     stream << Format(event);
@@ -61,7 +75,13 @@ void FileSink::Log_(Event const & event) {
 }
 
 
+std::string ConsoleSink::GetDescription_() const {
+    return std::string{"ConsoleSink"};
+}
+
+
 void ConsoleSink::Log_(Event const & event) {
+    std::lock_guard<std::mutex> lock{console_mutex_};
     std::cerr << Format(event);
     std::cerr.flush();
 }
