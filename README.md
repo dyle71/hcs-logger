@@ -109,11 +109,6 @@ If you have any suggestions please drop in an email at https://gitlab.com/headco
 
 ## The API
 
-**TBD**
-
-
-## Usage example
-
 The API is really small. There are
 
 * `Event`: That's the prime log event.
@@ -155,8 +150,39 @@ All loggers do have a parent-child relationship, i.e. "foo" is the parent logger
 and "foo.baz". With this concept, one can fine tune the log event processing of groups
 of subsystems, e.g. turn on all Debug for "network" and its children, but not for "database".
 
-The root logger (with no name) is the parent of all.
+The root logger (with no name) is the parent of all and will always be created.
 
+
+### Sink
+
+A sink is anything an event will be finally pushed. There are:
+
+* FileSink: write into a file, aka a log-file.
+* ConsoleSink: write to a terminal via `stderr`.
+* SyslogSink: write to syslog.
+* NullSink: consume events, like `/dev/null`.
+
+A logger may have any number of sinks attached. One can write to three log files, the terminal 
+and syslog in parallel. You even attach two ConsoleSink if you want to.
+
+A sink also has a barrier set like loggers. This is the "second firewall" for events to pass.
+The rational is, that you may have a single event source (the Logger object) but may want to
+pass on `Debug` events to a file, whereas `Critical` and `Warning` should also wind up in
+the syslog, yet you refrain in sweeping the syslog with the very same `Debug` messages.
+
+
+### Formatter
+
+Finally a `Formatter` object takes care to convert the event into the final message, to push
+to the date storage.
+
+Each sink has its own unique `Formatter`. Which you can change, of course.
+
+You may also want to write you own `Formatters` and provide the event log of your liking,
+if the `StandardFormatter` does not sport you.
+
+
+### Example
 
 ```c++
 #include <headcode/logger/logger.hpp>
@@ -207,7 +233,6 @@ int main(int argc, char ** argv) {
 }
 ```
 
-**TBD**
 
 ## Project layout
 
