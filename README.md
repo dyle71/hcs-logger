@@ -127,7 +127,7 @@ There are these log levels:
 
 * Debug (4): debug event.
 * Info (3): some information to be shown to the user.
-* Warning (2): an action could not be performed, but no situation should not happen under normal conditions. 
+* Warning (2): an action could not be performed, but the situation should not happen under normal conditions. 
   Yet all is still fine. For now.
 * Critical (1): an action has produces an invalid state. Probably loss of data ahead. Panic!
 
@@ -163,7 +163,7 @@ A sink is anything an event will be finally pushed. There are:
 * NullSink: consume events, like `/dev/null`.
 
 A logger may have any number of sinks attached. One can write to three log files, the terminal 
-and syslog in parallel. You even attach two ConsoleSink if you want to.
+and syslog in parallel. You can even attach two ConsoleSink if you want to.
 
 A sink also has a barrier set like loggers. This is the "second firewall" for events to pass.
 The rational is, that you may have a single event source (the Logger object) but may want to
@@ -228,6 +228,9 @@ int main(int argc, char ** argv) {
 
     foo();
     bar();
+    
+    // finally a multi-line example: each line will be prefixed
+    Info() << "The quick brown\n" << "fox jumped over\n" << "a minimum of " << 1337 << "\nlazy dogs." << std::endl;
 
     return 0;
 }

@@ -140,7 +140,7 @@ static std::string const color_info{"\x1B[38;5;15m"};
 /**
  * @brief   Terminal Color Code used for debug events.
  */
-static std::string const color_debug{"\x1B[38;5;248m"};
+static std::string const color_debug{"\x1B[38;5;244m"};
 
 
 /**
