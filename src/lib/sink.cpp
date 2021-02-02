@@ -12,6 +12,8 @@
 #include <fstream>
 #include <utility>
 
+#include <unistd.h>
+
 #include <headcode/logger/formatter.hpp>
 
 using namespace headcode::logger;
@@ -87,7 +89,9 @@ void FileSink::Log_(Event const & event) {
 
 
 ConsoleSink::ConsoleSink() : Sink{} {
-    SetFormatter(std::make_shared<ColorDarkBackgroundFormatter>());
+    if (isatty(2) == 1) {
+        SetFormatter(std::make_shared<ColorDarkBackgroundFormatter>());
+    }
 }
 
 
