@@ -25,7 +25,6 @@ build:
     - make run-gcovr
     - make package_source
     - cd ${CI_PROJECT_DIR}
-    - #sonar-scanner -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_LOGIN}  <-- eating up resources
   artifacts:
     paths:
       - build/*.tar.gz
