@@ -28,6 +28,11 @@ public:
     mutable std::shared_mutex mutex_;
 
     /**
+     * @brief   Counter of created loggers so far.
+     */
+    unsigned int logger_count{0};
+
+    /**
      * @brief   Time point when this registry came to live.
      */
     std::chrono::system_clock::time_point birth_;
@@ -162,6 +167,7 @@ static Registry & GetRegistryInstance() {
 void LoggerRegistryPurge() {
     auto & registry = GetRegistryInstance();
     registry.loggers_.clear();
+    registry.logger_count = 0;
 }
 #endif
 
@@ -193,23 +199,25 @@ std::chrono::system_clock::time_point Logger::GetBirth() {
 
 std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
 
-    static unsigned int logger_count{0};
-
     name = FixLoggerName(name);
     auto & registry = GetRegistryInstance();
 
     auto lock_write = registry.LockWrite();
-    auto iter = registry.loggers_.find(name);
-    if (iter == registry.loggers_.end()) {
 
-        auto logger = std::shared_ptr<Logger>(new Logger{name, logger_count++});
+    if (registry.logger_count == 0) {
+        // create root logger
+        auto logger = std::shared_ptr<Logger>(new Logger{name, registry.logger_count++});
         if (name.empty()) {
             logger->SetSink(std::make_shared<ConsoleSink>());
             logger->SetBarrier(Level::kWarning);
-        } else {
-            logger->SetBarrier(Level::kUndefined);
+            registry.loggers_.emplace(name, logger);
         }
+    }
 
+    auto iter = registry.loggers_.find(name);
+    if (iter == registry.loggers_.end()) {
+        auto logger = std::shared_ptr<Logger>(new Logger{name, registry.logger_count++});
+        logger->SetBarrier(Level::kUndefined);
         registry.loggers_.emplace(name, logger);
     }
 

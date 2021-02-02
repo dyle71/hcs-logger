@@ -82,7 +82,6 @@ headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
 * Different formatting for different sinks (e.g. console, file, syslog, ...)
 
 
-
 ## Philosophy
 
 All `headcode.space` software follows these directives:
@@ -114,6 +113,50 @@ If you have any suggestions please drop in an email at https://gitlab.com/headco
 
 
 ## Usage example
+
+The API is really small. There are
+
+* `Event`: That's the prime log event.
+* `Logger`: Objects of this class are the "administrators" of events. They examine events and redirect them to
+  a number of `Sink`s.
+* `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a 
+* `Formatter`: This class prepares the final output.
+
+
+### Events
+
+An event has a message, a log level and a Logger associated. Log levels define, if the event will
+make it through the logger barriers and will finally end up in some log message.
+
+There are these log levels:
+
+* Debug (4): debug event.
+* Info (3): some information to be shown to the user.
+* Warning (2): an action could not be performed, but no situation should not happen under normal conditions. 
+  Yet all is still fine. For now.
+* Critical (1): an action has produces an invalid state. Probably loss of data ahead. Panic!
+
+Then there are:
+
+* Silent (0): this level will not pass any event.
+* Undefined (-1): this is a level which defers to other barrier instances to check.
+
+### Logger
+
+Logger represent the logical subsystems of an application, e.g. you may have a frontend,
+a network library and some database attached. In order to manage all these categories of events
+one might turn on `Debug` only for the network part and remain all else in a somehow more quiet
+condition.
+
+Anytime you call `headcode::logger::GetLogger("foo")` will will get the very same 
+logger instance. If a logger for "foo" does not exist, one will be created.
+
+All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar" 
+and "foo.baz". With this concept, one can fine tune the log event processing of groups
+of subsystems, e.g. turn on all Debug for "network" and its children, but not for "database".
+
+The root logger (with no name) is the parent of all.
+
 
 ```c++
 #include <headcode/logger/logger.hpp>
