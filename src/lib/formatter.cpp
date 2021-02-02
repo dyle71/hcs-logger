@@ -6,10 +6,10 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
-#include <array>
 #include <ctime>
 #include <list>
 #include <map>
+#include <vector>
 
 #include <headcode/logger/logger_core.hpp>
 #include <headcode/logger/formatter.hpp>
@@ -140,18 +140,7 @@ static std::string const color_info{"\x1B[38;5;15m"};
 /**
  * @brief   Terminal Color Code used for debug events.
  */
-static std::string const color_debug{"\x1B[38;5;240m"};
-
-
-/**
- * @brief   Array of different colors for different loggers.
- */
-static std::array<std::string, 16> const color_loggers {
-    "\x1B[38;5;88m", "\x1B[38;5;94m", "\x1B[38;5;100m", "\x1B[38;5;106m",
-    "\x1B[38;5;112m", "\x1B[38;5;118m", "\x1B[38;5;120m", "\x1B[38;5;124m",
-    "\x1B[38;5;130m", "\x1B[38;5;134m", "\x1B[38;5;138m", "\x1B[38;5;142m",
-    "\x1B[38;5;146m", "\x1B[38;5;152m", "\x1B[38;5;156m", "\x1B[38;5;162m"
-};
+static std::string const color_debug{"\x1B[38;5;248m"};
 
 
 /**
@@ -207,8 +196,15 @@ std::tuple<std::string, std::string> GetLevelStringColors(Event const & event) {
  */
 std::tuple<std::string, std::string> GetLoggerStringColors(Event const & event) {
 
-    size_t index = (event.GetLogger()->GetId() + 12) % color_loggers.size();
+    static std::vector<std::string> color_loggers;
+    if (color_loggers.empty()) {
+        color_loggers.resize(232 - 16);
+        for (int i = 16; i < 232; ++i) {
+            color_loggers[i - 16] = std::string{"\x1B[38;5;"} + std::to_string(i) + "m";
+        }
+    }
 
+    size_t index = (event.GetLogger()->GetId() * 11) % color_loggers.size();
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):
             return {color_critical, color_reset};
