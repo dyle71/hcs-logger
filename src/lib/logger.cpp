@@ -166,7 +166,7 @@ void LoggerRegistryPurge() {
 #endif
 
 
-Logger::Logger(std::string name) : name_{std::move(name)} {
+Logger::Logger(std::string name, unsigned int id) : name_{std::move(name)}, id_(id) {
     ancestors_ = CreateListOfAncestors(name_);
 }
 
@@ -193,6 +193,8 @@ std::chrono::system_clock::time_point Logger::GetBirth() {
 
 std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
 
+    static unsigned int logger_count{0};
+
     name = FixLoggerName(name);
     auto & registry = GetRegistryInstance();
 
@@ -200,7 +202,7 @@ std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
     auto iter = registry.loggers_.find(name);
     if (iter == registry.loggers_.end()) {
 
-        auto logger = std::shared_ptr<Logger>(new Logger{name});
+        auto logger = std::shared_ptr<Logger>(new Logger{name, logger_count++});
         if (name.empty()) {
             logger->SetSink(std::make_shared<ConsoleSink>());
             logger->SetBarrier(Level::kWarning);

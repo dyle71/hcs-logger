@@ -86,6 +86,11 @@ void FileSink::Log_(Event const & event) {
 }
 
 
+ConsoleSink::ConsoleSink() : Sink{} {
+    SetFormatter(std::make_shared<ColorDarkBackgroundFormatter>());
+}
+
+
 std::string ConsoleSink::GetDescription_() const {
     return std::string{"ConsoleSink"};
 }

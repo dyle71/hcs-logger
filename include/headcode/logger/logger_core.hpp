@@ -237,7 +237,7 @@ private:
      * @brief   Constructor
      * @param   name            the name of the logger.
      */
-    explicit Logger(std::string name);
+    explicit Logger(std::string name, unsigned int id);
 
     /**
      * @brief   Pushed the given event to a sink.

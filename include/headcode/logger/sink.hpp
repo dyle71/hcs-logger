@@ -137,7 +137,7 @@ private:
      * @brief   Gets the sink description.
      * @return  A human readable description of this sink.
      */
-    virtual std::string GetDescription_() const = 0;
+    [[nodiscard]] virtual std::string GetDescription_() const = 0;
 
     /**
      * @brief   This does the actual logging.
@@ -241,6 +241,13 @@ private:
 class ConsoleSink : public Sink {
 
     static std::mutex console_mutex_;        //!< @brief mutex to write to console.
+
+public:
+    /**
+     * @brief   Constructs a sink which pushes the log messages into a stream.
+     * @param   filename        Name of the file to write to.
+     */
+    explicit ConsoleSink();
 
 private:
     /**

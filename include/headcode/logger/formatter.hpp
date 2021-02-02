@@ -137,6 +137,22 @@ private:
 };
 
 
+/**
+ * @brief   The standard formatter used for console sinks.
+ * This is best viewed in a general dark console color scheme.
+ */
+class ColorDarkBackgroundFormatter : public Formatter {
+
+private:
+    /**
+     * @brief   The detailed formatter function to reimplement in derived classes.
+     * @param   event           the log event data.
+     * @return  The string to push to the Sink instance.
+     */
+    std::string Format_(Event const & event) override;
+};
+
+
 }
 
 

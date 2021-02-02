@@ -6,6 +6,7 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
+#include <array>
 #include <ctime>
 #include <list>
 #include <map>
@@ -106,6 +107,163 @@ std::string StandardFormatter::Format_(Event const & event) {
     std::stringstream ss;
     for (auto const & line : lines) {
         ss << time_string << " " << level_string << (logger_string.empty() ? "" : " ") << logger_string << ": " << line;
+    }
+
+    return ss.str();
+}
+
+
+/**
+ * @brief   Terminal Color Code used to reset color encoding.
+ */
+static std::string const color_reset{"\x1B[0m"};
+
+
+/**
+ * @brief   Terminal Color Code used for critical events.
+ */
+static std::string const color_critical{"\x1B[1;38;5;9m"};
+
+
+/**
+ * @brief   Terminal Color Code used for warning events.
+ */
+static std::string const color_warning{"\x1B[1;38;5;11m"};
+
+
+/**
+ * @brief   Terminal Color Code used for info events.
+ */
+static std::string const color_info{"\x1B[38;5;15m"};
+
+
+/**
+ * @brief   Terminal Color Code used for debug events.
+ */
+static std::string const color_debug{"\x1B[38;5;240m"};
+
+
+/**
+ * @brief   Array of different colors for different loggers.
+ */
+static std::array<std::string, 16> const color_loggers {
+    "\x1B[38;5;88m", "\x1B[38;5;94m", "\x1B[38;5;100m", "\x1B[38;5;106m",
+    "\x1B[38;5;112m", "\x1B[38;5;118m", "\x1B[38;5;120m", "\x1B[38;5;124m",
+    "\x1B[38;5;130m", "\x1B[38;5;134m", "\x1B[38;5;138m", "\x1B[38;5;142m",
+    "\x1B[38;5;146m", "\x1B[38;5;152m", "\x1B[38;5;156m", "\x1B[38;5;162m"
+};
+
+
+/**
+ * @brief   Gets the pre and post terminal color strings for the time of this event.
+ * @param   event       the event.
+ * @return  The pre and post terminal color string.
+ */
+std::tuple<std::string, std::string> GetTimeStringColors(Event const & event) {
+
+    switch (event.GetLevel()) {
+        case static_cast<int>(Level::kCritical):
+            return {color_critical, color_reset};
+
+        case static_cast<int>(Level::kWarning):
+            return {color_warning, color_reset};
+
+        case static_cast<int>(Level::kInfo):
+            return {color_info, color_reset};
+
+        default:
+            return {color_debug, color_reset};
+    }
+}
+
+
+/**
+ * @brief   Gets the pre and post terminal color strings for the level of this event.
+ * @param   event       the event.
+ * @return  The pre and post terminal color string.
+ */
+std::tuple<std::string, std::string> GetLevelStringColors(Event const & event) {
+
+    switch (event.GetLevel()) {
+        case static_cast<int>(Level::kCritical):
+            return {color_critical, color_reset};
+
+        case static_cast<int>(Level::kWarning):
+            return {color_warning, color_reset};
+
+        case static_cast<int>(Level::kInfo):
+            return {color_info, color_reset};
+
+        default:
+            return {color_debug, color_reset};
+    }
+}
+
+
+/**
+ * @brief   Gets the pre and post terminal color strings for the logger of this event.
+ * @param   event       the event.
+ * @return  The pre and post terminal color string.
+ */
+std::tuple<std::string, std::string> GetLoggerStringColors(Event const & event) {
+
+    size_t index = (event.GetLogger()->GetId() + 12) % color_loggers.size();
+
+    switch (event.GetLevel()) {
+        case static_cast<int>(Level::kCritical):
+            return {color_critical, color_reset};
+
+        case static_cast<int>(Level::kWarning):
+            return {color_warning, color_reset};
+
+        default:
+            return {color_loggers[index], color_reset};
+    }
+}
+
+
+/**
+ * @brief   Gets the pre and post terminal color strings for a line of this event.
+ * @param   event       the event.
+ * @return  The pre and post terminal color string.
+ */
+std::tuple<std::string, std::string> GetLineStringColors(Event const & event) {
+
+    switch (event.GetLevel()) {
+        case static_cast<int>(Level::kCritical):
+            return {color_critical, color_reset};
+
+        case static_cast<int>(Level::kWarning):
+            return {color_warning, color_reset};
+
+        case static_cast<int>(Level::kInfo):
+            return {color_info, color_reset};
+
+        default:
+            return {color_debug, color_reset};
+    }
+}
+
+
+std::string ColorDarkBackgroundFormatter::Format_(Event const & event) {
+
+    auto lines = SplitMessageIntoLines(event.str());
+    auto time_string = CreateTimeString(event);
+    auto level_string = CreateLevelString(event);
+    auto logger_string = CreateLoggerString(event);
+
+    auto [time_pre, time_post] = GetTimeStringColors(event);
+    auto [level_pre, level_post] = GetLevelStringColors(event);
+    auto [logger_pre, logger_post] = GetLoggerStringColors(event);
+    auto [line_pre, line_post] = GetLineStringColors(event);
+
+    std::stringstream ss;
+    for (auto const & line : lines) {
+        ss << time_pre << time_string << time_post << " "
+           << level_pre << level_string << level_post
+           << (logger_string.empty() ? "" : " ")
+           << logger_pre << logger_string << logger_post
+           << line_pre << ": " << line << line_post;
     }
 
     return ss.str();

@@ -6,6 +6,7 @@
 # Oliver Maurhart <info@headcode.space>, https://www.headcode.space
 # ------------------------------------------------------------
 
+add_subdirectory(console)
 add_subdirectory(file_logging)
 add_subdirectory(hello_world_debug)
 add_subdirectory(hello_world_warning)
