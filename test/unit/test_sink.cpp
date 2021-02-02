@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <filesystem>
+#include <regex>
 
 #include <gtest/gtest.h>
 
@@ -140,6 +141,12 @@ TEST(Sink, multiple) {
     logger->AddSink(d_sink);
     logger->AddSink(e_sink);
 
+    a_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
+    b_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
+    c_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
+    d_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
+    e_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
+
     logger->SetBarrier(headcode::logger::Level::kDebug);
     EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
 
@@ -159,4 +166,48 @@ TEST(Sink, multiple) {
     headcode::logger::Warning() << "This is a warning message.";
     headcode::logger::Critical() << "This is a critical message.";
     headcode::logger::Event(headcode::logger::Level::kSilent) << "This is a silent message.";
+
+    ASSERT_TRUE(std::filesystem::exists("a.log"));
+    ASSERT_TRUE(std::filesystem::exists("b.log"));
+    ASSERT_TRUE(std::filesystem::exists("c.log"));
+    ASSERT_TRUE(std::filesystem::exists("d.log"));
+    EXPECT_FALSE(std::filesystem::exists("e.log"));
+
+    auto CollectEvents = [&](std::string const & name, std::list<std::string> & l) {
+        static std::regex const re{R"(\[\d\d\d\d-\d\d-\d\dT\d\d\:\d\d\:\d\d,\d\d\d\+\d\d\:\d\d\] \((\S*) *\)\: .*)"};
+        std::smatch match;
+        std::ifstream file;
+        file.open(name, std::ios::in);
+        do {
+            std::string line;
+            std::getline(file, line);
+            if (line.empty()) {
+                continue;
+            }
+            std::regex_match(line, match, re);
+            ASSERT_EQ(match.size(), 2u);
+            l.push_back(match[1]);
+        } while (file.good());
+        file.close();
+    };
+
+    std::list<std::string> a_events;
+    CollectEvents("a.log", a_events);
+    std::list<std::string> a_expected = {"debug", "info", "warning", "critical"};
+    EXPECT_EQ(a_events, a_expected);
+
+    std::list<std::string> b_events;
+    CollectEvents("b.log", b_events);
+    std::list<std::string> b_expected = {"info", "warning", "critical"};
+    EXPECT_EQ(b_events, b_expected);
+
+    std::list<std::string> c_events;
+    CollectEvents("c.log", c_events);
+    std::list<std::string> c_expected = {"warning", "critical"};
+    EXPECT_EQ(c_events, c_expected);
+
+    std::list<std::string> d_events;
+    CollectEvents("d.log", d_events);
+    std::list<std::string> d_expected = {"critical"};
+    EXPECT_EQ(d_events, d_expected);
 }

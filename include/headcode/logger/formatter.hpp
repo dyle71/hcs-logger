@@ -95,7 +95,6 @@ public:
      */
     static std::list<std::string> SplitMessageIntoLines(std::string const & message);
 
-
 private:
     /**
      * @brief   The detailed formatter function to reimplement in derived classes.
