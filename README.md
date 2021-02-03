@@ -155,15 +155,19 @@ You may assign any positive number of your liking and act on these to. There is 
 class MyTraceEvents : public headcode::logger::Event {
 
 public:
-explicit MyTraceEvents(std::string logger_name = {}) : Event(TRACE_LOG_LEVEL, std::move(logger_name)) {
-}
+    explicit MyTraceEvents(std::string logger_name = {}) 
+        : Event(TRACE_LOG_LEVEL, std::move(logger_name)) {
+    }
 
-    explicit Debug(std::shared_ptr<Logger> logger) : Event(TRACE_LOG_LEVEL, std::move(logger)) {
+    explicit MyTraceEvents(std::shared_ptr<Logger> logger) 
+        : Event(TRACE_LOG_LEVEL, std::move(logger)) {
     }
 };
 ...
 void foo() {
     MyTraceEvents{} << "Tracing: entered foo()";
+    ...
+    MyTraceEvents{} << "Tracing: leaving foo()";
 }
 ```
 
