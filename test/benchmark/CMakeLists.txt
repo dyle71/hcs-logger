@@ -11,6 +11,7 @@ link_directories("${GTEST_LIBRARY_PATH};${GMOCK_LIBRARY_PATH}")
 set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
 
 set(BENCHMARK_TEST_SRC
+    test_normal_flow.cpp
 )
 
 add_executable(benchmark-tests ${BENCHMARK_TEST_SRC} ${BENCHMARK_TEST_OPENSSL_SRC})
