@@ -138,8 +138,8 @@ There are these log levels:
 
 * `Debug` (4): debug event.
 * `Info` (3): some information to be shown to the user.
-* `Warning` (2): an action could not be performed, but the situation should not happen under normal conditions. Yet all
-  is still fine. For now.
+* `Warning` (2): an action could not be performed, but the situation should not happen under normal conditions. 
+  Yet all is still fine. For now.
 * `Critical` (1): an action has produces an invalid state. Probably loss of data ahead. Panic!
 
 Then there are also these log levels:
@@ -150,38 +150,42 @@ Then there are also these log levels:
 You may assign any positive number of your liking and act on these to. There is no real limit.
 
 ```c++
+#define TRACE_LOG_LEVEL     10000
 
+class MyTraceEvents : public headcode::logger::Event {
 
+public:
+explicit MyTraceEvents(std::string logger_name = {}) : Event(TRACE_LOG_LEVEL, std::move(logger_name)) {
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
+    explicit Debug(std::shared_ptr<Logger> logger) : Event(TRACE_LOG_LEVEL, std::move(logger)) {
+    }
+};
+...
+void foo() {
+    MyTraceEvents{} << "Tracing: entered foo()";
+}
 ```
 
-If so, keep in mind to raise the barriers at the designated `Logger` and the `Sink`s to let these events pass.
+If so, keep in mind to raise the barriers at the designated `Logger` and the `Sink`s to let these
+events pass.
+
 
 ### Logger
 
-Logger represent the logical subsystems of an application, e.g. you may have a frontend, a network library and some
-database attached. In order to manage all these categories of events one might turn on `Debug` only for the network part
-and remain all else in a somehow more quiet condition.
+Logger represent the logical subsystems of an application, e.g. you may have a frontend,
+a network library and some database attached. In order to manage all these categories of events
+one might turn on `Debug` only for the network part and remain all else in a somehow more quiet
+condition.
 
-Anytime you call `headcode::logger::GetLogger("foo")` will get the very same logger instance. If a logger for "foo" does
-not exist, one will be created.
+Anytime you call `headcode::logger::GetLogger("foo")` will get the very same 
+logger instance. If a logger for "foo" does not exist, one will be created.
 
-All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar"
-and "foo.baz". With this concept, one can fine tune the log event processing of groups of subsystems, e.g. turn on all
-Debug for "network" and its children, but not for "database". If the barrier value of a logger is *undefined* then the
-barrier value of the parent logger instance is used. The root logger does not accept *undefined* barrier.
+All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar" 
+and "foo.baz". With this concept, one can fine tune the log event processing of groups
+of subsystems, e.g. turn on all Debug for "network" and its children, but not for "database".
+If the barrier value of a logger is *undefined* then the barrier value of the parent 
+logger instance is used. The root logger does not accept *undefined* barrier.
 
 The root logger (with no name) is the parent of all and will always be created.
 
