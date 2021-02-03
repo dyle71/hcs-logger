@@ -14,3 +14,4 @@ set(TEST_SRC
 
 add_executable(test-hello-world-debug ${TEST_SRC})
 target_link_libraries(test-hello-world-debug "hcs-logger;${CMAKE_REQUIRED_LIBRARIES}")
+add_test(integration/hello_world_debug ${CMAKE_CURRENT_BINARY_DIR}/test-hello-world-debug)

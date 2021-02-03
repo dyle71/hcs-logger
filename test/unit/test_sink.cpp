@@ -224,7 +224,10 @@ TEST(Sink, multiple) {
 
 TEST(Sink, syslog) {
 
-    headcode::logger::Logger::GetLogger()->SetSink(std::make_shared<headcode::logger::SyslogSink>());
+    auto sink = std::make_shared<headcode::logger::SyslogSink>();
+    EXPECT_STREQ(sink->GetDescription().c_str(), "SyslogSink");
+    headcode::logger::Logger::GetLogger()->SetSink(sink);
+
 
     headcode::logger::Debug() << "This is a debug message.";
     headcode::logger::Info() << "This is an info message.";
@@ -239,4 +242,34 @@ TEST(Sink, syslog) {
     // positives. Meeh...
 
     ASSERT_TRUE(true);
+}
+
+
+TEST(Sink, force_color_output) {
+
+    if (std::filesystem::exists("a.log")) {
+        std::filesystem::remove("a.log");
+    }
+
+    auto sink = std::make_shared<headcode::logger::FileSink>("a.log");
+    headcode::logger::Logger::GetLogger()->SetBarrier(1000);
+    headcode::logger::Logger::GetLogger()->SetSink(sink);
+    sink->SetFormatter(std::make_shared<headcode::logger::ColorDarkBackgroundFormatter>());
+
+    headcode::logger::Critical() << "This critical event should be in color.";
+    headcode::logger::Warning() << "This warning event should be in color.";
+    headcode::logger::Info() << "This info event should be in color.";
+    headcode::logger::Debug() << "This debug event should be in color.";
+
+    std::ifstream log_file;
+    log_file.open("a.log", std::ios::in);
+
+    std::string line;
+    std::getline(log_file, line);
+    log_file.close();
+
+    // Checking color codes in strings with a lot of escape codes, the IDE in between,
+    // and several different conversation utilities thinking they know better,
+    // is quite hard... How to do this correctly?
+    EXPECT_FALSE(line.empty());
 }
