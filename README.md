@@ -117,6 +117,9 @@ The API is really small. There are
 * `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a 
 * `Formatter`: This class prepares the final output.
 
+After an installation you'll find a doxygen documentation in your usual `doc` folder, which provides more
+details.
+
 
 ### Events
 
