@@ -12,6 +12,8 @@
 #include <fstream>
 #include <utility>
 
+// Currently very Linux/Unix centered...
+#include <syslog.h>
 #include <unistd.h>
 
 #include <headcode/logger/formatter.hpp>
@@ -80,7 +82,10 @@ std::string FileSink::GetDescription_() const {
 
 
 void FileSink::Log_(Event const & event) {
+
     std::lock_guard<std::mutex> lock{mutex_};
+
+    // We may keep the file open for a better performance. I have to test.
     std::ofstream stream;
     stream.open(filename_, std::ios::out | std::ios::app);
     stream << Format(event);
@@ -104,4 +109,47 @@ void ConsoleSink::Log_(Event const & event) {
     std::lock_guard<std::mutex> lock{console_mutex_};
     std::cerr << Format(event);
     std::cerr.flush();
+}
+
+
+SyslogSink::SyslogSink() : Sink{} {
+    SetFormatter(std::make_shared<SimpleFormatter>());
+}
+
+
+std::string SyslogSink::GetDescription_() const {
+    return std::string{"SyslogSink"};
+}
+
+
+void SyslogSink::Log_(Event const & event) {
+
+    // We may keep the syslog open for a better performance. I have to test.
+    openlog(nullptr, LOG_PID, LOG_USER);
+
+    int priority;
+    switch (event.GetLevel()) {
+
+        case static_cast<int>(Level::kCritical):
+            priority = LOG_CRIT;
+            break;
+
+        case static_cast<int>(Level::kWarning):
+            priority = LOG_WARNING;
+            break;
+
+        case static_cast<int>(Level::kInfo):
+            priority = LOG_INFO;
+            break;
+
+        case static_cast<int>(Level::kDebug):
+            priority = LOG_DEBUG;
+            break;
+
+        default:
+            priority = LOG_ERR;
+    }
+
+    syslog(priority, "%s", Format(event).c_str());
+    closelog();
 }

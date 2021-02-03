@@ -211,3 +211,23 @@ TEST(Sink, multiple) {
     std::list<std::string> d_expected = {"critical"};
     EXPECT_EQ(d_events, d_expected);
 }
+
+
+TEST(Sink, syslog) {
+
+    headcode::logger::Logger::GetLogger()->SetSink(std::make_shared<headcode::logger::SyslogSink>());
+
+    headcode::logger::Debug() << "This is a debug message.";
+    headcode::logger::Info() << "This is an info message.";
+    headcode::logger::Warning() << "This is a warning message.";
+    headcode::logger::Critical() << "This is a critical message.";
+    headcode::logger::Event(headcode::logger::Level::kSilent) << "This is a silent message.";
+
+    // How to verify if these messages have appeared in syslog in a platform independent manner?
+    // We might open the syslog in /var/log/syslog or /var/log/message, if journalctld writes
+    // one that is. Next, we have to filter the messages to find our own one, and then we have
+    // to match the recorded PID against the PID of this testing instance to avoid false
+    // positives. Meeh...
+
+    ASSERT_TRUE(true);
+}

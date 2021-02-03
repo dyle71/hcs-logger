@@ -263,6 +263,32 @@ private:
 };
 
 
+/**
+ * @brief   Pushes all log messages to syslog.
+ */
+class SyslogSink : public Sink {
+
+public:
+    /**
+     * @brief   Constructs a sink which pushes the log messages into a stream.
+     */
+    explicit SyslogSink();
+
+private:
+    /**
+     * @brief   Gets the sink description.
+     * @return  A human readable description of this sink.
+     */
+    [[nodiscard]] std::string GetDescription_() const override;
+
+    /**
+     * @brief   This does the actual logging.
+     * @param   event       the event to log.
+     */
+    void Log_(Event const & event) override;
+};
+
+
 }
 
 
