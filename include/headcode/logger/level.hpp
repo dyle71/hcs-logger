@@ -27,9 +27,9 @@ namespace headcode::logger {
  *          - kInfo     ==> Drop
  *          - kDebug    ==> Drop
  *
- * To enable ALL messages set a log level as high as possible. Log Events may use any higher 
+ * To enable ALL messages set a log level as high as possible. Log Events may use any higher
  * number as kDebug, as the user whiches. The framework is confident with these listened, but
- * you are free to chip in any postive number of your liking (e.g. Trace = 100, 
+ * you are free to chip in any postive number of your liking (e.g. Trace = 100,
  * SuperTrace = 1000, ...)
  *
  * To enforce strict silence set the log level to kSilent.

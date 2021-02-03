@@ -65,7 +65,7 @@ TEST(Logger, list_loggers) {
     ASSERT_TRUE(logger_bar != nullptr);
     EXPECT_STREQ(logger_bar->GetName().c_str(), "bar");
 
-    auto logger_bar_baz= headcode::logger::Logger::GetLogger("bar.baz");
+    auto logger_bar_baz = headcode::logger::Logger::GetLogger("bar.baz");
     ASSERT_TRUE(logger_bar_baz != nullptr);
     EXPECT_STREQ(logger_bar_baz->GetName().c_str(), "bar.baz");
 

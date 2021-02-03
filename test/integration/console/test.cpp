@@ -11,7 +11,7 @@
 using namespace headcode::logger;
 
 
-int main(int , char **) {
+int main(int, char **) {
 
     Logger::GetLogger()->SetBarrier(1000);
     Critical() << "This is a critical message.";

@@ -260,11 +260,9 @@ std::string ColorDarkBackgroundFormatter::Format_(Event const & event) {
 
     std::stringstream ss;
     for (auto const & line : lines) {
-        ss << time_pre << time_string << time_post << " "
-           << level_pre << level_string << level_post
-           << (logger_string.empty() ? "" : " ")
-           << logger_pre << logger_string << logger_post
-           << line_pre << ": " << line << line_post;
+        ss << time_pre << time_string << time_post << " " << level_pre << level_string << level_post
+           << (logger_string.empty() ? "" : " ") << logger_pre << logger_string << logger_post << line_pre << ": "
+           << line << line_post;
     }
 
     return ss.str();

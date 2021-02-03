@@ -11,7 +11,7 @@
 using namespace headcode::logger;
 
 
-int main(int , char **) {
+int main(int, char **) {
     Logger::GetLogger()->SetBarrier(Level::kDebug);
     Debug() << "Hello World!";
     return 0;

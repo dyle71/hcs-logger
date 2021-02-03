@@ -21,7 +21,7 @@ void SetupLogging() {
 }
 
 
-int main(int , char **) {
+int main(int, char **) {
 
     SetupLogging();
 

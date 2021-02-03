@@ -30,32 +30,32 @@ class Logger;
 
 /**
  * @brief   This is something to be logged.
- * 
+ *
  * All events are immediately assigned a Logger instance at creation.
  * So, `Event{kInfo, "app.network.incoming"}` will creare a Info message
  * associated with the `app.network.incoming` subsystem (whatever that is).
- * 
- * If the event does make it to any output is now dependen on the 
+ *
+ * If the event does make it to any output is now dependen on the
  * barrier settings of the Logger instance (`app.network.incoming`).
- * If this barrier is labeled `kUndefined` then the barrier of the 
- * ancestors of the logger is searched for: `app.network`, `app`, 
+ * If this barrier is labeled `kUndefined` then the barrier of the
+ * ancestors of the logger is searched for: `app.network`, `app`,
  * `<root>` (in that order).
- * 
+ *
  * If the event passed this first gate, then it will be directed to
  * all the sinks defined at the logger (e.g. console, file, ...).
  * Yet these sinks also have barriers set up to pass.
- * 
+ *
  * E.g. you might want to log to the console and syslog simultanously.
  * Yet every Debug and Info should not sweep the syslog but is
  * welcomed on a terminal.
- * 
+ *
  * Events are derived from std::stringstream and therefore anything
  * you can do to a std::stringstream, you can do to events too.
- * 
+ *
  * Example:
  * @code
  *      Event{kInfo, "app.database"} << "Created a new entry. "
- *                                   << "The answer is " << 42 
+ *                                   << "The answer is " << 42
  *                                   << " and this is pi:" << 3.1415;
  * @endcode
  */
