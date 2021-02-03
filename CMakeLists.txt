@@ -168,6 +168,7 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/html
 # Workload
 
 add_subdirectory(src)
+option(BUILD_TESTING "enable testing" off)
 if (BUILD_TESTING)
     message(STATUS "Building tests")
     add_subdirectory(test)

@@ -11,9 +11,8 @@ link_directories("${GTEST_LIBRARY_PATH};${GMOCK_LIBRARY_PATH}")
 set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
 
 set(BENCHMARK_TEST_SRC
-    test_normal_flow.cpp
+    test_benchmark.cpp
 )
 
 add_executable(benchmark-tests ${BENCHMARK_TEST_SRC} ${BENCHMARK_TEST_OPENSSL_SRC})
 target_link_libraries(benchmark-tests hcs-logger gtest gtest_main gmock gmock_main ${CMAKE_REQUIRED_LIBRARIES})
-gtest_add_tests(benchmark-tests "" AUTO)
