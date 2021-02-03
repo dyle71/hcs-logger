@@ -123,6 +123,17 @@ The API is really small. There are
 An event has a message, a log level and a Logger associated. Log levels define, if the event will
 make it through the logger barriers and will finally end up in some log message.
 
+Events are stream objects, i.e.
+
+```c++
+#include <headcode/logger/logger.hpp>
+using namespace headcode::logger;
+...
+Event{Level::kDebug} << "This is a number: " << 42 << ". See?";
+```
+Anything you can do to `std::ostream` you can do to Events. However, the final message of
+the event will be written, when the object gets out of scope.
+
 There are these log levels:
 
 * Debug (4): debug event.
@@ -143,12 +154,14 @@ a network library and some database attached. In order to manage all these categ
 one might turn on `Debug` only for the network part and remain all else in a somehow more quiet
 condition.
 
-Anytime you call `headcode::logger::GetLogger("foo")` will will get the very same 
+Anytime you call `headcode::logger::GetLogger("foo")` will get the very same 
 logger instance. If a logger for "foo" does not exist, one will be created.
 
 All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar" 
 and "foo.baz". With this concept, one can fine tune the log event processing of groups
 of subsystems, e.g. turn on all Debug for "network" and its children, but not for "database".
+If the barrier value of a logger is *undefined* then the barrier value of the parent 
+logger instance is used. The root logger does not accept *undefined* barrier.
 
 The root logger (with no name) is the parent of all and will always be created.
 
@@ -169,6 +182,30 @@ A sink also has a barrier set like loggers. This is the "second firewall" for ev
 The rational is, that you may have a single event source (the Logger object) but may want to
 pass on `Debug` events to a file, whereas `Critical` and `Warning` should also wind up in
 the syslog, yet you refrain in sweeping the syslog with the very same `Debug` messages.
+
+You can easily derive your own sink, e.g. a `NetworkSink` which passes on messages
+via UDP, like this:
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+class NetworkSink : public headcode::logger::Sink {
+
+private:
+    std::string GetDescription_() const override {
+        return "My new, shiny NetworkSink";
+    }
+
+    void Log_(Event const & event) override {
+        // your code ...
+        std::string log_message = Format(event);
+        ...
+    }
+};
+
+...
+headcode::logger::Logger::GetLogger()->AddSink(std::make_shared<NetworkSink>());
+```
 
 
 ### Formatter
