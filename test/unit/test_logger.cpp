@@ -8,6 +8,9 @@
 
 #include <gtest/gtest.h>
 
+#include <filesystem>
+#include <fstream>
+
 #include <headcode/logger/logger.hpp>
 
 
@@ -31,6 +34,11 @@ TEST(Logger, regular) {
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+
+    auto logger_root = headcode::logger::Logger::GetLogger("<root>");
+    ASSERT_TRUE(logger_root != nullptr);
+    EXPECT_STREQ(logger_root->GetName().c_str(), "<root>");
+    EXPECT_EQ(logger_root, logger);
 
     auto logger_foo = headcode::logger::Logger::GetLogger("foo");
     ASSERT_TRUE(logger_foo != nullptr);
@@ -103,6 +111,7 @@ TEST(Logger, parenting) {
     auto logger = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+    EXPECT_EQ(logger->GetParentLogger(), nullptr);
 
     auto logger_foo_bar_baz = headcode::logger::Logger::GetLogger("foo.bar.baz");
     ASSERT_TRUE(logger_foo_bar_baz != nullptr);
@@ -329,6 +338,40 @@ TEST(Logger, ancestors) {
     EXPECT_STREQ(logger_bar_baz->GetName().c_str(), "bar.baz");
     std::list<std::string> ancestors_bar_baz = {"bar", ""};
     EXPECT_TRUE(logger_bar_baz->GetAncestors() == ancestors_bar_baz);
+}
+
+TEST(Logger, parent_sink) {
+
+    LoggerRegistryPurge();
+
+    auto logger = headcode::logger::Logger::GetLogger({});
+    ASSERT_TRUE(logger != nullptr);
+
+    if (std::filesystem::exists("a.log")) {
+        std::filesystem::remove("a.log");
+    }
+
+    auto formatter = std::make_shared<headcode::logger::SimpleFormatter>();
+    auto sink = std::make_shared<headcode::logger::FileSink>("a.log");
+    sink->SetFormatter(formatter);
+    logger->SetSink(sink);
+
+    auto logger_foo = headcode::logger::Logger::GetLogger("foo");
+    ASSERT_TRUE(logger_foo != nullptr);
+
+    logger_foo->SetBarrier(headcode::logger::Level::kDebug);
+    headcode::logger::Debug("foo") << "This is an empty sink.";
+
+    std::ifstream log_file;
+    log_file.open("a.log", std::ios::in);
+
+    std::string line;
+    std::getline(log_file, line);
+    log_file.close();
+
+    EXPECT_STREQ(line.c_str(), "This is an empty sink.");
+    EXPECT_EQ(logger->GetEventsLogged(), 0ul);
+    EXPECT_GT(logger_foo->GetEventsLogged(), 0ul);
 }
 
 #endif

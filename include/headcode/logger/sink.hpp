@@ -34,6 +34,7 @@ class Sink {
 
     int barrier_{static_cast<int>(Level::kDebug)};        //!< @brief Log level barrier (see description).
     std::shared_ptr<Formatter> formatter_;                //!< @brief The formatter used for this sink.
+    std::uint64_t events_logged_{0};                      //!< @brief Number of events logged so far.
 
 public:
     /**
@@ -99,6 +100,14 @@ public:
      * @return  A human readable description of this sink.
      */
     [[nodiscard]] std::string GetDescription() const;
+
+    /**
+     * @brief   Returns the number of events logged so far.
+     * @return  The amount of events which passed this logger instance.
+     */
+    [[nodiscard]] std::uint64_t GetEventsLogged() const {
+        return events_logged_;
+    }
 
     /**
      * @brief   Returns the formatter of this sink.
@@ -182,36 +191,36 @@ private:
  * @code
  * #include <fstream>
  * #include <memory>
- * 
+ *
  * #include <headcode/logger/logger.hpp>
- * 
+ *
  * using namespace headcode::logger;
- * 
- * 
+ *
+ *
  * void SetupLogging() {
  *     auto file_sink = std::make_shared<FileSink>("app.log");
  *     Logger::GetLogger()->SetSink(file_sink);
  *     Logger::GetLogger()->SetBarrier(Level::kDebug);
  * }
- * 
- * 
+ *
+ *
  * int main(int , char **) {
- * 
+ *
  *     SetupLogging();
- * 
+ *
  *     Debug() << "This is a debug message." << std::endl;
  *     Info() << "... and this is a warning message." << std::endl;
  *     Warning() << "See yourself been warned." << std::endl;
  *     Critical() << "Let's panic!" << std::endl;
- * 
+ *
  *     return 0;
  * }
  * @endcode
  */
 class FileSink : public Sink {
 
-    std::string filename_;      //!< @brief The name of the file to write to.
-    std::mutex mutex_;          //!< @brief mutex to write to file.
+    std::string filename_;        //!< @brief The name of the file to write to.
+    std::mutex mutex_;            //!< @brief mutex to write to file.
 
 public:
     /**

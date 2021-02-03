@@ -148,7 +148,7 @@ static std::string const color_debug{"\x1B[38;5;244m"};
  * @param   event       the event.
  * @return  The pre and post terminal color string.
  */
-std::tuple<std::string, std::string> GetTimeStringColors(Event const & event) {
+static std::tuple<std::string, std::string> GetTimeStringColors(Event const & event) {
 
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):
@@ -171,7 +171,7 @@ std::tuple<std::string, std::string> GetTimeStringColors(Event const & event) {
  * @param   event       the event.
  * @return  The pre and post terminal color string.
  */
-std::tuple<std::string, std::string> GetLevelStringColors(Event const & event) {
+static std::tuple<std::string, std::string> GetLevelStringColors(Event const & event) {
 
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):
@@ -194,7 +194,7 @@ std::tuple<std::string, std::string> GetLevelStringColors(Event const & event) {
  * @param   event       the event.
  * @return  The pre and post terminal color string.
  */
-std::tuple<std::string, std::string> GetLoggerStringColors(Event const & event) {
+static std::tuple<std::string, std::string> GetLoggerStringColors(Event const & event) {
 
     static std::vector<std::string> color_loggers;
     if (color_loggers.empty()) {
@@ -203,6 +203,11 @@ std::tuple<std::string, std::string> GetLoggerStringColors(Event const & event) 
             color_loggers[i - 16] = std::string{"\x1B[38;5;"} + std::to_string(i) + "m";
         }
     }
+
+    // The colors in the near neighbourhood are very much the same with a small epsilon.
+    // Therefore, based on the continuous index number of loggers, we make jumps with
+    // a prime number (hopefully acting as an algebraic generator), to get distinct colours
+    // for loggers with consecutive IDs.
 
     size_t index = (event.GetLogger()->GetId() * 11) % color_loggers.size();
     switch (event.GetLevel()) {
@@ -223,7 +228,7 @@ std::tuple<std::string, std::string> GetLoggerStringColors(Event const & event) 
  * @param   event       the event.
  * @return  The pre and post terminal color string.
  */
-std::tuple<std::string, std::string> GetLineStringColors(Event const & event) {
+static std::tuple<std::string, std::string> GetLineStringColors(Event const & event) {
 
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):

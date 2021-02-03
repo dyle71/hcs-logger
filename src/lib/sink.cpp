@@ -41,6 +41,7 @@ std::string Sink::GetDescription() const {
 void Sink::Log(Event const & event) {
     auto level = event.GetLevel();
     if ((level > 0) && (level <= GetBarrier())) {
+        events_logged_++;
         Log_(event);
     }
 }

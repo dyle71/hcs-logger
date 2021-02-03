@@ -93,17 +93,26 @@ TEST(Sink, file) {
 
 TEST(Sink, description) {
 
+    headcode::logger::Event event{1};
+    event << "This is an event";
+
     auto null_sink = headcode::logger::NullSink{};
     ASSERT_FALSE(null_sink.GetDescription().empty());
     EXPECT_STREQ(null_sink.GetDescription().c_str(), "NullSink");
+    null_sink.Log(event);
+    EXPECT_GT(null_sink.GetEventsLogged(), 0u);
 
     auto file_sink = headcode::logger::FileSink{};
     ASSERT_FALSE(file_sink.GetDescription().empty());
     EXPECT_STREQ(file_sink.GetDescription().c_str(), "FileSink to a.log");
+    file_sink.Log(event);
+    EXPECT_GT(file_sink.GetEventsLogged(), 0u);
 
     auto console_sink = headcode::logger::ConsoleSink{};
     ASSERT_FALSE(console_sink.GetDescription().empty());
     EXPECT_STREQ(console_sink.GetDescription().c_str(), "ConsoleSink");
+    console_sink.Log(event);
+    EXPECT_GT(console_sink.GetEventsLogged(), 0u);
 }
 
 
