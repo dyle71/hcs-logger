@@ -116,31 +116,31 @@ std::string StandardFormatter::Format_(Event const & event) {
 /**
  * @brief   Terminal Color Code used to reset color encoding.
  */
-static std::string const color_reset{"\x1B[0m"};
+static std::string const kColorReset{"\x1B[0m"};
 
 
 /**
  * @brief   Terminal Color Code used for critical events.
  */
-static std::string const color_critical{"\x1B[1;38;5;9m"};
+static std::string const kColorCritical{"\x1B[1;38;5;9m"};
 
 
 /**
  * @brief   Terminal Color Code used for warning events.
  */
-static std::string const color_warning{"\x1B[1;38;5;11m"};
+static std::string const kColorWarning{"\x1B[1;38;5;11m"};
 
 
 /**
  * @brief   Terminal Color Code used for info events.
  */
-static std::string const color_info{"\x1B[38;5;15m"};
+static std::string const kColorInfo{"\x1B[38;5;15m"};
 
 
 /**
  * @brief   Terminal Color Code used for debug events.
  */
-static std::string const color_debug{"\x1B[38;5;244m"};
+static std::string const kColorDebug{"\x1B[38;5;244m"};
 
 
 /**
@@ -152,16 +152,16 @@ static std::tuple<std::string, std::string> GetTimeStringColors(Event const & ev
 
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):
-            return {color_critical, color_reset};
+            return {kColorCritical, kColorReset};
 
         case static_cast<int>(Level::kWarning):
-            return {color_warning, color_reset};
+            return {kColorWarning, kColorReset};
 
         case static_cast<int>(Level::kInfo):
-            return {color_info, color_reset};
+            return {kColorInfo, kColorReset};
 
         default:
-            return {color_debug, color_reset};
+            return {kColorDebug, kColorReset};
     }
 }
 
@@ -175,16 +175,16 @@ static std::tuple<std::string, std::string> GetLevelStringColors(Event const & e
 
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):
-            return {color_critical, color_reset};
+            return {kColorCritical, kColorReset};
 
         case static_cast<int>(Level::kWarning):
-            return {color_warning, color_reset};
+            return {kColorWarning, kColorReset};
 
         case static_cast<int>(Level::kInfo):
-            return {color_info, color_reset};
+            return {kColorInfo, kColorReset};
 
         default:
-            return {color_debug, color_reset};
+            return {kColorDebug, kColorReset};
     }
 }
 
@@ -212,13 +212,13 @@ static std::tuple<std::string, std::string> GetLoggerStringColors(Event const & 
     size_t index = (event.GetLogger()->GetId() * 11) % color_loggers.size();
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):
-            return {color_critical, color_reset};
+            return {kColorCritical, kColorReset};
 
         case static_cast<int>(Level::kWarning):
-            return {color_warning, color_reset};
+            return {kColorWarning, kColorReset};
 
         default:
-            return {color_loggers[index], color_reset};
+            return {color_loggers[index], kColorReset};
     }
 }
 
@@ -232,16 +232,16 @@ static std::tuple<std::string, std::string> GetLineStringColors(Event const & ev
 
     switch (event.GetLevel()) {
         case static_cast<int>(Level::kCritical):
-            return {color_critical, color_reset};
+            return {kColorCritical, kColorReset};
 
         case static_cast<int>(Level::kWarning):
-            return {color_warning, color_reset};
+            return {kColorWarning, kColorReset};
 
         case static_cast<int>(Level::kInfo):
-            return {color_info, color_reset};
+            return {kColorInfo, kColorReset};
 
         default:
-            return {color_debug, color_reset};
+            return {kColorDebug, kColorReset};
     }
 }
 

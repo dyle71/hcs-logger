@@ -170,10 +170,10 @@ The root logger (with no name) is the parent of all and will always be created.
 
 A sink is anything an event will be finally pushed. There are:
 
-* FileSink: write into a file, aka a log-file.
-* ConsoleSink: write to a terminal via `stderr`.
-* SyslogSink: write to syslog.
-* NullSink: consume events, like `/dev/null`.
+* `FileSink`: write into a file, aka a log-file.
+* `ConsoleSink`: write to a terminal via `stderr`.
+* `SyslogSink`: write to syslog.
+* `NullSink`: consume events, like `/dev/null`.
 
 A logger may have any number of sinks attached. One can write to three log files, the terminal 
 and syslog in parallel. You can even attach two ConsoleSink if you want to.
@@ -217,6 +217,13 @@ Each sink has its own unique `Formatter`. Which you can change, of course.
 
 You may also want to write you own `Formatters` and provide the event log of your liking,
 if the `StandardFormatter` does not sport you.
+
+Currently there are:
+
+* `SimpleFormatter`: Just pushes the event message.
+* `StandardFormatter`: Adds time point, level and logger. The time point is given as ISO8601 time value.
+* `ColorDarkBackgroundFormatter`: Same as StandardFormatter but ... uhm ... with color ... 
+  for a ... errmm ... dark terminal background (names...).
 
 
 ### Example
