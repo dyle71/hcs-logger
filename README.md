@@ -136,26 +136,47 @@ the event will be written, when the object gets out of scope.
 
 There are these log levels:
 
-* Debug (4): debug event.
-* Info (3): some information to be shown to the user.
-* Warning (2): an action could not be performed, but the situation should not happen under normal conditions. 
-  Yet all is still fine. For now.
-* Critical (1): an action has produces an invalid state. Probably loss of data ahead. Panic!
+* `Debug` (4): debug event.
+* `Info` (3): some information to be shown to the user.
+* `Warning` (2): an action could not be performed, but the situation should not happen under normal conditions. Yet all
+  is still fine. For now.
+* `Critical` (1): an action has produces an invalid state. Probably loss of data ahead. Panic!
 
-Then there are:
+Then there are also these log levels:
 
 * Silent (0): this level will not pass any event.
 * Undefined (-1): this is a level which defers to other barrier instances to check.
 
+You may assign any positive number of your liking and act on these to. There is no real limit.
+
+```c++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+If so, keep in mind to raise the barriers at the designated `Logger` and the `Sink`s to let these events pass.
+
 ### Logger
 
-Logger represent the logical subsystems of an application, e.g. you may have a frontend,
-a network library and some database attached. In order to manage all these categories of events
-one might turn on `Debug` only for the network part and remain all else in a somehow more quiet
-condition.
+Logger represent the logical subsystems of an application, e.g. you may have a frontend, a network library and some
+database attached. In order to manage all these categories of events one might turn on `Debug` only for the network part
+and remain all else in a somehow more quiet condition.
 
-Anytime you call `headcode::logger::GetLogger("foo")` will get the very same 
-logger instance. If a logger for "foo" does not exist, one will be created.
+Anytime you call `headcode::logger::GetLogger("foo")` will get the very same logger instance. If a logger for "foo" does
+not exist, one will be created.
 
 All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar" 
 and "foo.baz". With this concept, one can fine tune the log event processing of groups
