@@ -252,6 +252,19 @@ std::shared_ptr<Logger> Logger::GetParentLogger() const {
 }
 
 
+std::list<std::string> Logger::GetRegisteredLoggers() {
+
+    std::list<std::string> res;
+    auto & registry = GetRegistryInstance();
+    auto lock_read = registry.LockRead();
+    for (auto const & [_, logger] : registry.loggers_) {
+        res.push_back(logger->GetName());
+    }
+
+    return res;
+}
+
+
 void Logger::Log(Event const & event) {
 
     ++events_logged_;

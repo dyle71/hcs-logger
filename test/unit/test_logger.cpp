@@ -41,6 +41,31 @@ TEST(Logger, regular) {
 }
 
 
+TEST(Logger, list_loggers) {
+
+    LoggerRegistryPurge();
+
+    auto logger = headcode::logger::Logger::GetLogger({});
+    ASSERT_TRUE(logger != nullptr);
+    EXPECT_STREQ(logger->GetName().c_str(), "<root>");
+
+    auto logger_foo = headcode::logger::Logger::GetLogger("foo");
+    ASSERT_TRUE(logger_foo != nullptr);
+    EXPECT_STREQ(logger_foo->GetName().c_str(), "foo");
+
+    auto logger_bar = headcode::logger::Logger::GetLogger("bar");
+    ASSERT_TRUE(logger_bar != nullptr);
+    EXPECT_STREQ(logger_bar->GetName().c_str(), "bar");
+
+    auto logger_bar_baz= headcode::logger::Logger::GetLogger("bar.baz");
+    ASSERT_TRUE(logger_bar_baz != nullptr);
+    EXPECT_STREQ(logger_bar_baz->GetName().c_str(), "bar.baz");
+
+    std::list<std::string> expected = {"<root>", "bar", "bar.baz", "foo"};
+    EXPECT_EQ(headcode::logger::Logger::GetRegisteredLoggers(), expected);
+}
+
+
 TEST(Logger, sinks) {
 
     LoggerRegistryPurge();

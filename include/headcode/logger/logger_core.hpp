@@ -190,6 +190,13 @@ public:
      */
     [[nodiscard]] std::string GetName() const;
 
+
+    /**
+     * @brief   Retrieves a list of all known loggers.
+     * @return  A list of all registered loggers.
+     */
+    [[nodiscard]] static std::list<std::string> GetRegisteredLoggers();
+
     /**
      * @brief   Gets all the sinks associated with this logger.
      * @return  All the sinks of this logger.
