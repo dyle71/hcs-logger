@@ -27,14 +27,25 @@ public:
     mutable std::shared_mutex mutex_;
 
     /**
+     * @brief   Counter of created loggers so far.
+     */
+    unsigned int logger_count{0};
+
+    /**
+     * @brief   Time point when this registry came to live.
+     */
+    std::chrono::system_clock::time_point birth_;
+
+    /**
      * @brief   All known loggers.
      */
-    std::map<std::string, std::shared_ptr<Logger>> loggers_;
+    std::map<std::string, std::shared_ptr<headcode::logger::Logger>> loggers_;
 
     /**
      * @brief   Constructor.
      */
-    Registry() = default;
+    Registry() : birth_{std::chrono::system_clock::now()} {
+    }
 
     /**
      * @brief   Copy Constructor.
@@ -82,6 +93,66 @@ public:
 
 
 /**
+ * @brief   Creates the list of dot-separated names of all ancestors.
+ *
+ * E.g. given "foo.bar.baz" the list will be {"foo.bar", "foo", ""}.
+ *
+ * @param   name        name of the current logger.
+ * @return  list of ancestor names.
+ */
+static std::list<std::string> CreateListOfAncestors(std::string name) {
+
+    std::list<std::string> res;
+
+    if (!name.empty()) {
+        auto pos = name.rfind('.');
+        while (pos != std::string::npos) {
+            name = name.substr(0, pos);
+            res.push_back(name);
+            pos = name.rfind('.');
+        }
+        res.emplace_back(std::string{});
+    }
+
+    return res;
+}
+
+/**
+ * @brief   Examine a logger name and make some corrections.
+ * @param   name        the name provided by the user.
+ * @return  The fixed name to be used inside here in the registry.
+ */
+std::string FixLoggerName(std::string name) {
+
+    if (name.empty()) {
+        return name;
+    }
+    if (name == "<root>") {
+        return std::string{};
+    }
+
+    auto double_dots = name.find("..");
+    while (double_dots != std::string::npos) {
+        name.replace(double_dots, 2, ".");
+        double_dots = name.find("..");
+    }
+
+    size_t left = 0;
+    size_t right = name.size();
+    while ((left < name.size()) && (name[left] == '.')) {
+        ++left;
+    }
+    while ((right > left) && (name[right - 1] == '.')) {
+        --right;
+    }
+
+    name = name.substr(left, right - left);
+
+    return name;
+}
+
+
+/**
  * @brief   Returns the Registry singleton.
  * @return  The one and only registry instance.
  */
@@ -91,24 +162,159 @@ static Registry & GetRegistryInstance() {
 }
 
 
-Logger::Logger(std::string name) : name_{std::move(name)} {
+#ifdef DEBUG
+void LoggerRegistryPurge() {
+    auto & registry = GetRegistryInstance();
+    registry.loggers_.clear();
+    registry.logger_count = 0;
+}
+#endif
+
+
+Logger::Logger(std::string name, unsigned int id) : name_{std::move(name)}, id_(id) {
+    ancestors_ = CreateListOfAncestors(name_);
+}
+
+
+void Logger::AddSink(std::shared_ptr<Sink> const & sink) {
+
+    bool present = false;
+    for (auto iter = sinks_.begin(); iter != sinks_.end() && !present; ++iter) {
+        present = (*iter) == sink;
+    }
+    if (present) {
+        return;
+    }
+
+    sinks_.push_back(sink);
+}
+
+
+std::chrono::system_clock::time_point Logger::GetBirth() {
+    auto const & registry = GetRegistryInstance();
+    return registry.birth_;
 }
 
 
 std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
 
-    std::shared_ptr<Logger> res;
+    name = FixLoggerName(name);
+    auto & registry = GetRegistryInstance();
 
-    {
-        auto & registry = GetRegistryInstance();
-        auto lock_read = registry.LockWrite();
-        auto iter = registry.loggers_.find(name);
-        if (iter == registry.loggers_.end()) {
-            registry.loggers_.emplace(name, std::shared_ptr<Logger>(new Logger{name}));
+    auto lock_write = registry.LockWrite();
+
+    if (registry.logger_count == 0) {
+        // create root logger
+        auto logger = std::shared_ptr<Logger>(new Logger{name, registry.logger_count++});
+        if (name.empty()) {
+            logger->SetSink(std::make_shared<ConsoleSink>());
+            logger->SetBarrier(Level::kWarning);
+            registry.loggers_.emplace(name, logger);
         }
+    }
 
-        res = registry.loggers_[name];
+    auto iter = registry.loggers_.find(name);
+    if (iter == registry.loggers_.end()) {
+        auto logger = std::shared_ptr<Logger>(new Logger{name, registry.logger_count++});
+        logger->SetBarrier(Level::kUndefined);
+        registry.loggers_.emplace(name, logger);
+    }
+
+    return registry.loggers_[name];
+}
+
+
+std::string Logger::GetName() const {
+    if (name_.empty()) {
+        return "<root>";
+    }
+    return name_;
+}
+
+
+std::shared_ptr<Logger> Logger::GetParentLogger() const {
+
+    if (name_.empty()) {
+        return nullptr;
+    }
+
+    auto & registry = GetRegistryInstance();
+    auto lock_read = registry.LockRead();
+    for (auto const & name : ancestors_) {
+        auto iter = registry.loggers_.find(name);
+        if (iter != registry.loggers_.end()) {
+            return iter->second;
+        }
+    }
+
+    return nullptr;
+}
+
+
+std::list<std::string> Logger::GetRegisteredLoggers() {
+
+    std::list<std::string> res;
+    auto & registry = GetRegistryInstance();
+    auto lock_read = registry.LockRead();
+    for (auto const & [_, logger] : registry.loggers_) {
+        res.push_back(logger->GetName());
     }
 
     return res;
+}
+
+
+void Logger::Log(Event const & event) {
+
+    ++events_logged_;
+
+    if (GetBarrier() > 0) {
+        Push(event);
+    } else {
+        auto parent = GetParentLogger();
+        if (parent) {
+            parent->Log(event);
+        }
+    }
+}
+
+
+void Logger::Push(Event const & event) {
+
+    if (sinks_.empty()) {
+        auto parent = GetParentLogger();
+        if (parent) {
+            parent->Push(event);
+        }
+    } else {
+        for (auto & sink : sinks_) {
+            sink->Log(event);
+        }
+    }
+}
+
+
+void Logger::SetBarrier(int barrier) {
+
+    if (barrier < -1) {
+        barrier = -1;
+    }
+
+    if (name_.empty() && (barrier < 0)) {
+        // No kUndefined at the root logger.
+        return;
+    }
+
+    barrier_ = barrier;
+}
+
+
+void Logger::SetBarrier(Level barrier) {
+    SetBarrier(static_cast<int>(barrier));
+}
+
+
+void Logger::SetSink(std::shared_ptr<Sink> sink) {
+    sinks_.clear();
+    sinks_.push_back(sink);
 }

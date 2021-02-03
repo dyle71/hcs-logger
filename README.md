@@ -3,6 +3,84 @@
 This C++17 library is very much like log4c++. Yet, hcs-logger strives to be minimal and concise 
 with no further dependencies.
 
+In general, everything stays out of the way. On default only `Critical`
+and `Warning` are enabled. So this is totally sufficient:
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    Warning{} << "Hello World!";
+    return 0;
+}
+```
+
+To enable debug messages right from the start:
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    Logger::GetLogger()->SetBarrier(Level::kDebug);
+    Debug{} << "Hello World!";
+    return 0;
+}
+```
+
+That said, `hcs-logger` can do some more things:
+
+Features:
+
+* Differentiate between log sources or systems and turn each on or off
+
+E.g. you might have a system "network" and "database" in your code base. Seen
+from hcs-logger these are all different `Logger` instances.
+
+Example:
+```c++
+// turn off all messages from "network"
+headcode::logger::GetLogger("network")->SetBarrier(headcode::logger::Level::kSilent);
+// ... but turn all message from "database" on:
+headcode::logger::GetLogger("database")->SetBarrier(headcode::logger::Level::kDebug);
+...
+// This will not be shown
+headcode::logger::Debug("network") << "Got a debug message while doing network stuff...";
+// This will be printed
+headcode::logger::Debug("database") << "Doing database stuff now...";
+```
+
+* Loggers (aka logging subsystems) are hierarchical ordered with the dot `.` delimiter.
+
+Example: turn off each and every message but warnings and critical, yet also debug for a subsystem:
+```c++
+headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kWarning);
+headcode::logger::GetLogger("app.network")->SetBarrier(headcode::logger::Level::kSilent);
+headcode::logger::GetLogger("app.network.incoming")->SetBarrier(headcode::logger::Level::kDebug);
+```
+
+* Loggers can have any numbers of sinks associated with additional barriers.
+
+Example: different log levels for different outputs:
+```c++
+// logfile: "my_app.log" (but only info, warnings and errors)
+auto file_sink = std::make_shared<headcode::logger::FileSink>("my_app.log");
+file_sink->SetBarrier(headcode::logger::Level::kInfo);
+// and log to stderr too (including debug stuff)
+auto console_sink = std::make_shared<headcode::logger::ConsoleSink>();
+console_sink->SetBarrier(headcode::logger::Level::kDebug);
+
+// set sink: only 1 sink
+headcode::logger::GetLogger()->SetSink(file_sink);
+// add sink: add another one
+headcode::logger::GetLogger()->AddSink(console_sink);
+// set allowed maximum log level, before passing on to sinks
+headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
+```
+
+* Different formatting for different sinks (e.g. console, file, syslog, ...)
+
 
 ## Philosophy
 
@@ -31,11 +109,211 @@ If you have any suggestions please drop in an email at https://gitlab.com/headco
 
 ## The API
 
-TBD
+The API is really small. There are
 
-## Usage example
+* `Event`: That's the prime log event.
+* `Logger`: Objects of this class are the "administrators" of events. They examine events and redirect them to
+  a number of `Sink`s.
+* `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a 
+* `Formatter`: This class prepares the final output.
 
-TDB
+After an installation you'll find a doxygen documentation in your usual `doc` folder, which provides more
+details.
+
+
+### Events
+
+An event has a message, a log level and a Logger associated. Log levels define, if the event will
+make it through the logger barriers and will finally end up in some log message.
+
+Events are stream objects, i.e.
+
+```c++
+#include <headcode/logger/logger.hpp>
+using namespace headcode::logger;
+...
+Event{Level::kDebug} << "This is a number: " << 42 << ". See?";
+```
+Anything you can do to `std::ostream` you can do to Events. However, the final message of
+the event will be written, when the object gets out of scope.
+
+There are these log levels:
+
+* `Debug` (4): debug event.
+* `Info` (3): some information to be shown to the user.
+* `Warning` (2): an action could not be performed, but the situation should not happen under normal conditions. 
+  Yet all is still fine. For now.
+* `Critical` (1): an action has produces an invalid state. Probably loss of data ahead. Panic!
+
+Then there are also these log levels:
+
+* Silent (0): this level will not pass any event.
+* Undefined (-1): this is a level which defers to other barrier instances to check.
+
+You may assign any positive number of your liking and act on these to. There is no real limit.
+
+```c++
+#define TRACE_LOG_LEVEL     10000
+
+class MyTraceEvents : public headcode::logger::Event {
+
+public:
+    explicit MyTraceEvents(std::string logger_name = {}) 
+        : Event(TRACE_LOG_LEVEL, std::move(logger_name)) {
+    }
+
+    explicit MyTraceEvents(std::shared_ptr<Logger> logger) 
+        : Event(TRACE_LOG_LEVEL, std::move(logger)) {
+    }
+};
+...
+void foo() {
+    MyTraceEvents{} << "Tracing: entered foo()";
+    ...
+    MyTraceEvents{} << "Tracing: leaving foo()";
+}
+```
+
+If so, keep in mind to raise the barriers at the designated `Logger` and the `Sink`s to let these
+events pass.
+
+
+### Logger
+
+Logger represent the logical subsystems of an application, e.g. you may have a frontend,
+a network library and some database attached. In order to manage all these categories of events
+one might turn on `Debug` only for the network part and remain all else in a somehow more quiet
+condition.
+
+Anytime you call `headcode::logger::GetLogger("foo")` will get the very same 
+logger instance. If a logger for "foo" does not exist, one will be created.
+
+All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar" 
+and "foo.baz". With this concept, one can fine tune the log event processing of groups
+of subsystems, e.g. turn on all Debug for "network" and its children, but not for "database".
+If the barrier value of a logger is *undefined* then the barrier value of the parent 
+logger instance is used. The root logger does not accept *undefined* barrier.
+
+The root logger (with no name) is the parent of all and will always be created.
+
+
+### Sink
+
+A sink is anything an event will be finally pushed. There are:
+
+* `FileSink`: write into a file, aka a log-file.
+* `ConsoleSink`: write to a terminal via `stderr`.
+* `SyslogSink`: write to syslog.
+* `NullSink`: consume events, like `/dev/null`.
+
+A logger may have any number of sinks attached. One can write to three log files, the terminal 
+and syslog in parallel. You can even attach two ConsoleSink if you want to.
+
+A sink also has a barrier set like loggers. This is the "second firewall" for events to pass.
+The rational is, that you may have a single event source (the Logger object) but may want to
+pass on `Debug` events to a file, whereas `Critical` and `Warning` should also wind up in
+the syslog, yet you refrain in sweeping the syslog with the very same `Debug` messages.
+
+You can easily derive your own sink, e.g. a `NetworkSink` which passes on messages
+via UDP, like this:
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+class NetworkSink : public headcode::logger::Sink {
+
+private:
+    std::string GetDescription_() const override {
+        return "My new, shiny NetworkSink";
+    }
+
+    void Log_(Event const & event) override {
+        // your code ...
+        std::string log_message = Format(event);
+        ...
+    }
+};
+
+...
+headcode::logger::Logger::GetLogger()->AddSink(std::make_shared<NetworkSink>());
+```
+
+
+### Formatter
+
+Finally a `Formatter` object takes care to convert the event into the final message, to push
+to the date storage.
+
+Each sink has its own unique `Formatter`. Which you can change, of course.
+
+You may also want to write you own `Formatters` and provide the event log of your liking,
+if the `StandardFormatter` does not sport you.
+
+Currently there are:
+
+* `SimpleFormatter`: Just pushes the event message.
+* `StandardFormatter`: Adds time point, level and logger. The time point is given as ISO8601 time value.
+* `ColorDarkBackgroundFormatter`: Same as StandardFormatter but ... uhm ... with color ... 
+  for a ... errmm ... dark terminal background (names...).
+
+
+### Example
+
+The example below plays around with different logger instances and turns them
+on or off. 
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+void foo() {
+    Debug{} << "This is a debug message of foo, but routed to the main logger.";
+    Debug{"foo"} << "This is a debug message of foo, yet addressed to the 'foo' logger.";
+    Debug{"foo.child"} << "This is a debug message of foo.child.";
+}
+
+
+void bar() {
+    Critical{} << "bar() made a critical. The number is: " << 42;
+    Warn{} << "Pressure raising... to " << 3.1415;
+    Info{} << "All ok.";
+    Debug{} << "Object at 1337dead has an invalid value of 0xgibberish.";
+}
+
+
+int main(int argc, char ** argv) {
+
+    // only critical and warnings of bar() are pushed, foo() remains silent
+    foo();
+    bar();
+    
+    // activate also debug messages: raise the barrier to debug ==> everything is pushed
+    Logger::GetLogger()->SetBarrier(Level::kDebug);
+    
+    foo();
+    bar();
+    
+    // now turn off ALL messages associated with logger "foo" but keep "foo.child" alive for debug.
+    Logger::GetLogger("foo")->SetBarrier(Level::kSilent);
+    Logger::GetLogger("foo.child")->SetBarrier(Level::kDebug);
+    
+    foo();
+    bar();
+    
+    // tell 'foo.child' to use the same as 'foo' (which is kSilent) again.
+    Logger::GetLogger("foo.child")->SetBarrier(Level::kUndefined);
+
+    foo();
+    bar();
+    
+    // finally a multi-line example: each line will be prefixed
+    Info() << "The quick brown\n" << "fox jumped over\n" << "a minimum of " << 1337 << "\nlazy dogs." << std::endl;
+
+    return 0;
+}
+```
+
 
 ## Project layout
 
@@ -61,6 +339,12 @@ TDB
 ├── LICENSE.txt                 The software license.
 └── README.md                   This file.
 ```
+
+## Installation
+
+I provide binary installation packages for some operating systems 
+[here](https://gitlab.com/headcode.space/logger/-/packages).
+
 
 ## Build
 
@@ -131,6 +415,8 @@ This will give you the test coverage on stdout as well as:
 * `gcovr-report.xml`: this is the gcovr report file in xml
 * `coverge-html`: this is the folder in which detailed html info of collected coverage resides
   (open up the file `coverage-html/index.html` in a browser of your choice)
+* `gcovr-sonarqube-report.xml`: the same as the `gcov-report.xml` but sprinkled with enough
+  fairy dust to make SonarQube swallow it.
 
 in the build folder.
 

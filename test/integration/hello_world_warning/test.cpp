@@ -6,16 +6,12 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
-#ifndef HEADCODE_SPACE_LOGGER_LOGGER_HPP
-#define HEADCODE_SPACE_LOGGER_LOGGER_HPP
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
 
 
-#include "event.hpp"
-#include "formatter.hpp"
-#include "level.hpp"
-#include "logger_core.hpp"
-#include "sink.hpp"
-#include "version.hpp"
-
-
-#endif
+int main(int, char **) {
+    Warning() << "Hello World!";
+    return 0;
+}

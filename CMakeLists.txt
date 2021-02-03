@@ -39,9 +39,9 @@ ENABLE_TESTING()
 # ------------------------------------------------------------
 # Project Version
 
-set(VERSION_MAJOR "0")
+set(VERSION_MAJOR "1")
 set(VERSION_MINOR "0")
-set(VERSION_PATCH "1")
+set(VERSION_PATCH "0")
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 
@@ -116,6 +116,11 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     message(STATUS "Turning on compiler command export for CLang: ${CMAKE_BINARY_DIR}/compile_commands.json")
 endif ()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_definitions("DEBUG")
+endif ()
+
+
 # ---- callgrind integration ----
 
 option(CALLGRIND_ENABLED "enable callgrind" off)
@@ -154,7 +159,7 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES api-doc)
 add_custom_target(doc)
 add_dependencies(doc doxygen)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/html
-        DESTINATION share/doc/hcs-logger-${VERSION_MAJOR}.${VERSION_MINOR}
+        DESTINATION share/doc/hcs-logger-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
         COMPONENT documentation
 )
 
@@ -163,6 +168,7 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/html
 # Workload
 
 add_subdirectory(src)
+option(BUILD_TESTING "enable testing" off)
 if (BUILD_TESTING)
     message(STATUS "Building tests")
     add_subdirectory(test)

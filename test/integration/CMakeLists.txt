@@ -6,16 +6,7 @@
 # Oliver Maurhart <info@headcode.space>, https://www.headcode.space
 # ------------------------------------------------------------
 
-# activate Google Tests
-set(GTEST_SOURCE_DIR "${CMAKE_SOURCE_DIR}/3rd/googletest")
-include(${CMAKE_SOURCE_DIR}/cmake/gtest.cmake)
-
-
-# ------------------------------------------------------------ 
-# Workload
-
-set(TEST_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_subdirectory(unit)
-add_subdirectory(integration)
-add_subdirectory(benchmark)
+add_subdirectory(console)
+add_subdirectory(file_logging)
+add_subdirectory(hello_world_debug)
+add_subdirectory(hello_world_warning)
