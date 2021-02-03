@@ -159,7 +159,7 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES api-doc)
 add_custom_target(doc)
 add_dependencies(doc doxygen)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/html
-        DESTINATION share/doc/hcs-logger-${VERSION_MAJOR}.${VERSION_MINOR}
+        DESTINATION share/doc/hcs-logger-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
         COMPONENT documentation
 )
 
