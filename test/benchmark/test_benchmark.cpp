@@ -121,8 +121,8 @@ void PrefetchNormalFlow() {
     auto end = std::chrono::system_clock::now();
 
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "Benchmark 'PrefetchNormalFlow' - " << loop_count << " Debug() in " << milliseconds.count()
-              << " msec." << std::endl;
+    std::cout << "Benchmark 'PrefetchNormalFlow' - " << loop_count << " Debug() in " << milliseconds.count() << " msec."
+              << std::endl;
 }
 
 
@@ -145,7 +145,7 @@ void SilentFlow() {
 }
 
 
-int main(int, char**) {
+int main(int, char **) {
 
     NormalFlow();
     SilentFlow();
@@ -156,4 +156,3 @@ int main(int, char**) {
 
     return 0;
 }
-

@@ -7,7 +7,6 @@
  */
 
 #include <headcode/logger/logger_core.hpp>
-#include <headcode/logger/sink.hpp>
 
 #include <map>
 #include <shared_mutex>
