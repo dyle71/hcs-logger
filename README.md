@@ -221,6 +221,9 @@ if the `StandardFormatter` does not sport you.
 
 ### Example
 
+The example below plays around with different logger instances and turns them
+on or off. 
+
 ```c++
 #include <headcode/logger/logger.hpp>
 
@@ -298,6 +301,12 @@ int main(int argc, char ** argv) {
 ├── LICENSE.txt                 The software license.
 └── README.md                   This file.
 ```
+
+## Installation
+
+I provide binary installation packages for some operating systems 
+[here](https://gitlab.com/headcode.space/logger/-/packages).
+
 
 ## Build
 
