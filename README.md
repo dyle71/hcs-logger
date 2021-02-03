@@ -178,11 +178,10 @@ and remain all else in a somehow more quiet condition.
 Anytime you call `headcode::logger::GetLogger("foo")` will get the very same logger instance. If a logger for "foo" does
 not exist, one will be created.
 
-All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar" 
-and "foo.baz". With this concept, one can fine tune the log event processing of groups
-of subsystems, e.g. turn on all Debug for "network" and its children, but not for "database".
-If the barrier value of a logger is *undefined* then the barrier value of the parent 
-logger instance is used. The root logger does not accept *undefined* barrier.
+All loggers do have a parent-child relationship, i.e. "foo" is the parent logger of "foo.bar"
+and "foo.baz". With this concept, one can fine tune the log event processing of groups of subsystems, e.g. turn on all
+Debug for "network" and its children, but not for "database". If the barrier value of a logger is *undefined* then the
+barrier value of the parent logger instance is used. The root logger does not accept *undefined* barrier.
 
 The root logger (with no name) is the parent of all and will always be created.
 
