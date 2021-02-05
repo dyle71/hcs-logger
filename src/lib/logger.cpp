@@ -205,6 +205,7 @@ std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
 
     if (registry.logger_count == 0) {
         // create root logger
+        registry.loggers_.clear();
         auto logger = std::shared_ptr<Logger>(new Logger{name, registry.logger_count++});
         if (name.empty()) {
             logger->SetSink(std::make_shared<ConsoleSink>());
