@@ -16,6 +16,7 @@ set(UNIT_TEST_SRC
     test_level.cpp
     test_logger.cpp
     test_sink.cpp
+    test_threading.cpp
     test_version.cpp
 )
 
