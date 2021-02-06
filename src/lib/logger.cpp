@@ -15,6 +15,9 @@
 using namespace headcode::logger;
 
 
+namespace headcode::logger {
+
+
 /**
  * @brief   Our logger registry.
  * The is the "database" of all known loggers.
@@ -92,6 +95,9 @@ public:
 };
 
 
+}
+
+
 /**
  * @brief   Creates the list of dot-separated names of all ancestors.
  *
@@ -157,7 +163,7 @@ std::string FixLoggerName(std::string name) {
  * @return  The one and only registry instance.
  */
 static Registry & GetRegistryInstance() {
-    static Registry registry;
+    static headcode::logger::Registry registry;
     return registry;
 }
 
