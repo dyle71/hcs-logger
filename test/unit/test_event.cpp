@@ -80,3 +80,87 @@ TEST(Event, user_numbers) {
     auto event = headcode::logger::Event{1337};
     EXPECT_EQ(event.GetLevel(), 1337);
 }
+
+
+TEST(Event, debug) {
+
+    {
+        auto debug = headcode::logger::Debug{};
+        EXPECT_EQ(debug.GetLevel(), static_cast<int>(headcode::logger::Level::kDebug));
+    }
+    
+    {
+        auto debug = headcode::logger::Debug{""};
+        EXPECT_EQ(debug.GetLogger()->GetId(), 0u);
+        EXPECT_EQ(debug.GetLevel(), static_cast<int>(headcode::logger::Level::kDebug));
+    }
+
+    {
+        auto debug = headcode::logger::Debug{headcode::logger::Logger::GetLogger("foo")};
+        EXPECT_STREQ(debug.GetLogger()->GetName().c_str(), "foo");
+        EXPECT_EQ(debug.GetLevel(), static_cast<int>(headcode::logger::Level::kDebug));
+    }
+}
+
+
+TEST(Event, warning) {
+
+    {
+        auto warning = headcode::logger::Warning{};
+        EXPECT_EQ(warning.GetLevel(), static_cast<int>(headcode::logger::Level::kWarning));
+    }
+
+    {
+        auto warning = headcode::logger::Warning{""};
+        EXPECT_EQ(warning.GetLogger()->GetId(), 0u);
+        EXPECT_EQ(warning.GetLevel(), static_cast<int>(headcode::logger::Level::kWarning));
+    }
+
+    {
+        auto warning = headcode::logger::Warning{headcode::logger::Logger::GetLogger("foo")};
+        EXPECT_STREQ(warning.GetLogger()->GetName().c_str(), "foo");
+        EXPECT_EQ(warning.GetLevel(), static_cast<int>(headcode::logger::Level::kWarning));
+    }
+}
+
+
+TEST(Event, info) {
+
+    {
+        auto info = headcode::logger::Info{};
+        EXPECT_EQ(info.GetLevel(), static_cast<int>(headcode::logger::Level::kInfo));
+    }
+
+    {
+        auto info = headcode::logger::Info{""};
+        EXPECT_EQ(info.GetLogger()->GetId(), 0u);
+        EXPECT_EQ(info.GetLevel(), static_cast<int>(headcode::logger::Level::kInfo));
+    }
+
+    {
+        auto info = headcode::logger::Info{headcode::logger::Logger::GetLogger("foo")};
+        EXPECT_STREQ(info.GetLogger()->GetName().c_str(), "foo");
+        EXPECT_EQ(info.GetLevel(), static_cast<int>(headcode::logger::Level::kInfo));
+    }
+}
+
+
+TEST(Event, critical) {
+
+    {
+        auto critical = headcode::logger::Critical{};
+        EXPECT_EQ(critical.GetLevel(), static_cast<int>(headcode::logger::Level::kCritical));
+    }
+
+    {
+        auto critical = headcode::logger::Critical{""};
+        EXPECT_EQ(critical.GetLogger()->GetId(), 0u);
+        EXPECT_EQ(critical.GetLevel(), static_cast<int>(headcode::logger::Level::kCritical));
+    }
+
+    {
+        auto critical = headcode::logger::Critical{headcode::logger::Logger::GetLogger("foo")};
+        EXPECT_STREQ(critical.GetLogger()->GetName().c_str(), "foo");
+        EXPECT_EQ(critical.GetLevel(), static_cast<int>(headcode::logger::Level::kCritical));
+    }
+}
