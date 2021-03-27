@@ -112,7 +112,7 @@ All `headcode.space` software follows these directives in that order:
 6. Be performant. Yes, speed is impressive too.
 
 I'm by no means perfect. There's always room for improvements and there are sure still bugs.
-If you have any suggestions please drop in an email at https://gitlab.com/headcode.space/benchmark/-/issues.
+If you have any suggestions please drop in an email at https://gitlab.com/headcode.space/logger/-/issues.
 
 SonarQube instance for hcs-benchmark: https://sonar.ddns.headcode.space/dashboard?id=hcs-logger.
 
