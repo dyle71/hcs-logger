@@ -12,6 +12,7 @@
 #include <mutex>
 
 #include "event.hpp"
+#include "formatter.hpp"
 #include "level.hpp"
 
 
@@ -19,10 +20,6 @@
  * @brief   The headcode logger namespace
  */
 namespace headcode::logger {
-
-
-// fwd
-class Formatter;
 
 
 /**
@@ -33,7 +30,7 @@ class Formatter;
 class Sink {
 
     int barrier_{static_cast<int>(Level::kDebug)};        //!< @brief Log level barrier (see description).
-    std::shared_ptr<Formatter> formatter_;                //!< @brief The formatter used for this sink.
+    std::unique_ptr<Formatter> formatter_;                //!< @brief The formatter used for this sink.
     std::uint64_t events_logged_{0};                      //!< @brief Number of events logged so far.
 
 public:
@@ -113,8 +110,8 @@ public:
      * @brief   Returns the formatter of this sink.
      * @return  The Formatter instance of this link.
      */
-    [[nodiscard]] std::shared_ptr<Formatter> GetFormatter() const {
-        return formatter_;
+    [[nodiscard]] Formatter const * GetFormatter() const {
+        return formatter_.get();
     }
 
     /**
@@ -136,10 +133,11 @@ public:
     void SetBarrier(Level barrier);
 
     /**
-     * @brief   Returns the formatter of this sink.
-     * @return  The Formatter instance of this link.
+     * @brief   Sets the formatter of this sink.
+     * A nullptr is not accepted and rejected.
+     * @param   formatter       the new formatter of this sink.
      */
-    void SetFormatter(std::shared_ptr<Formatter> const & formatter);
+    void SetFormatter(std::unique_ptr<Formatter> && formatter);
 
 private:
     /**

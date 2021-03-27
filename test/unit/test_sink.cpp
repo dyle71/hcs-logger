@@ -55,7 +55,7 @@ TEST(Sink, file) {
 
     {
         auto sink = std::make_shared<headcode::logger::FileSink>("test.log");
-        sink->SetFormatter(std::make_shared<headcode::logger::SimpleFormatter>());
+        sink->SetFormatter(std::make_unique<headcode::logger::SimpleFormatter>());
 
         auto event_debug = headcode::logger::Debug();
         event_debug << "This is a debug message." << std::endl;
@@ -123,9 +123,11 @@ TEST(Sink, fomatters) {
     EXPECT_NE(a_sink->GetFormatter(), nullptr);
     a_sink->SetFormatter(nullptr);
     EXPECT_NE(a_sink->GetFormatter(), nullptr);
-    auto a_formatter = std::make_shared<headcode::logger::StandardFormatter>();
-    a_sink->SetFormatter(a_formatter);
-    EXPECT_EQ(a_sink->GetFormatter(), a_formatter);
+    auto a_formatter = std::make_unique<headcode::logger::StandardFormatter>();
+    auto a_formatter_to_remember = a_formatter.get();
+    a_sink->SetFormatter(std::move(a_formatter));
+    EXPECT_EQ(a_sink->GetFormatter(), a_formatter_to_remember);
+    EXPECT_EQ(a_formatter, nullptr);
 }
 
 
@@ -150,11 +152,11 @@ TEST(Sink, multiple) {
     logger->AddSink(d_sink);
     logger->AddSink(e_sink);
 
-    a_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    b_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    c_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    d_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    e_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
+    a_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    b_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    c_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    d_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    e_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
 
     logger->SetBarrier(headcode::logger::Level::kDebug);
     EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
@@ -254,7 +256,7 @@ TEST(Sink, force_color_output) {
     auto sink = std::make_shared<headcode::logger::FileSink>("a.log");
     headcode::logger::Logger::GetLogger()->SetBarrier(1000);
     headcode::logger::Logger::GetLogger()->SetSink(sink);
-    sink->SetFormatter(std::make_shared<headcode::logger::ColorDarkBackgroundFormatter>());
+    sink->SetFormatter(std::make_unique<headcode::logger::ColorDarkBackgroundFormatter>());
 
     headcode::logger::Critical() << "This critical event should be in color.";
     headcode::logger::Warning() << "This warning event should be in color.";

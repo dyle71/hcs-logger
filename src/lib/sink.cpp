@@ -24,7 +24,7 @@ using namespace headcode::logger;
 std::mutex headcode::logger::ConsoleSink::console_mutex_;
 
 
-Sink::Sink() : formatter_{std::make_shared<StandardFormatter>()} {
+Sink::Sink() : formatter_{std::make_unique<StandardFormatter>()} {
 }
 
 
@@ -55,11 +55,13 @@ void Sink::SetBarrier(int barrier) {
 }
 
 
-void Sink::SetFormatter(std::shared_ptr<Formatter> const & formatter) {
-    if (formatter != nullptr) {
-        formatter_ = formatter;
+void Sink::SetFormatter(std::unique_ptr<Formatter> && formatter) {
+    if (formatter.get() != nullptr) {
+        formatter_.reset();
+        formatter_.swap(formatter);
     }
 }
+
 
 void Sink::SetBarrier(Level barrier) {
     SetBarrier(static_cast<int>(barrier));
@@ -96,7 +98,7 @@ void FileSink::Log_(Event const & event) {
 
 ConsoleSink::ConsoleSink() : Sink{} {
     if (isatty(2) == 1) {
-        SetFormatter(std::make_shared<ColorDarkBackgroundFormatter>());
+        SetFormatter(std::make_unique<ColorDarkBackgroundFormatter>());
     }
 }
 
@@ -114,7 +116,7 @@ void ConsoleSink::Log_(Event const & event) {
 
 
 SyslogSink::SyslogSink() : Sink{} {
-    SetFormatter(std::make_shared<SimpleFormatter>());
+    SetFormatter(std::make_unique<SimpleFormatter>());
 }
 
 

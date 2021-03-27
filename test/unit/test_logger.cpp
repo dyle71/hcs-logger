@@ -351,9 +351,9 @@ TEST(Logger, parent_sink) {
         std::filesystem::remove("a.log");
     }
 
-    auto formatter = std::make_shared<headcode::logger::SimpleFormatter>();
+    auto formatter = std::make_unique<headcode::logger::SimpleFormatter>();
     auto sink = std::make_shared<headcode::logger::FileSink>("a.log");
-    sink->SetFormatter(formatter);
+    sink->SetFormatter(std::move(formatter));
     logger->SetSink(sink);
 
     auto logger_foo = headcode::logger::Logger::GetLogger("foo");
