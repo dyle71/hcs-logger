@@ -14,4 +14,4 @@ set(TEST_SRC
 
 add_executable(test-file-logging ${TEST_SRC})
 target_link_libraries(test-file-logging "hcs-logger;${CMAKE_REQUIRED_LIBRARIES}")
-add_test(integration/file_logging ${CMAKE_CURRENT_BINARY_DIR}/test-file-logging)
+add_test(integration/file_logging ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-file-logging)

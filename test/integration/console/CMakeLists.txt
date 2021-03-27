@@ -14,4 +14,4 @@ set(TEST_SRC
 
 add_executable(test-console ${TEST_SRC})
 target_link_libraries(test-console "hcs-logger;${CMAKE_REQUIRED_LIBRARIES}")
-add_test(integration/console ${CMAKE_CURRENT_BINARY_DIR}/test-console)
+add_test(integration/console ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-console)

@@ -14,4 +14,4 @@ set(TEST_SRC
 
 add_executable(test-hello-world-warning ${TEST_SRC})
 target_link_libraries(test-hello-world-warning "hcs-logger;${CMAKE_REQUIRED_LIBRARIES}")
-add_test(integration/hello_world_warning ${CMAKE_CURRENT_BINARY_DIR}/test-hello-world-warning)
+add_test(integration/hello_world_warning ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-hello-world-warning)
