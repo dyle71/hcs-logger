@@ -501,7 +501,7 @@ This will give you the test coverage on stdout as well as:
 in the build folder.
 
 
-## Installable package creation
+## Installable system package creation
 
 This project supports the creation of `DEB` and `RPM` files. This is done by specifying
 the `CPACK_GENERATOR` while configuring the project.
@@ -515,6 +515,7 @@ $ make
 ...
 $ make package
 ```
+(or use `ninja` in place of `make` if you use the Ninja generator)
 
 To create an installable `RPM`:
 ```bash
@@ -524,6 +525,24 @@ $ cmake -D CMAKE_BUILD_TYPE=Release -D CPACK_GENERATOR=RPM ..
 $ make
 ...
 $ make package
+```
+(or use `ninja` in place of `make` if you use the Ninja generator)
+
+
+## Conan packages
+
+To create and install conan packages locally, call
+```bash
+$ cd build
+$ make conan 
+```
+
+You may want to tweak the package labeling by setting `CONAN_USER` and `CONAN_CHANNEL` arguments
+in cmake call prior like this:
+```bash
+$ cd build
+$ cmake -D CONAN_USER=${USER} -D CONAN_CHANNEL="testing" ..
+$ make conan 
 ```
 
 
