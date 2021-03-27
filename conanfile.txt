@@ -8,6 +8,7 @@
 
 [requires]
 #hcs-benchmark/1.1.0@headcode.space+benchmark/stable
+#blah
 
 [generators]
 cmake

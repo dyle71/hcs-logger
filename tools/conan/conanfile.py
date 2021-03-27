@@ -24,11 +24,11 @@ class HcsLoggerConan(ConanFile):
 
     def source(self):
         git_source = "@CMAKE_SOURCE_DIR@" or "https://gitlab.com/headcode.space/benchmark.git"
-        self.run(f"git clone {git_source} {self.name}")
+        self.run(f"git clone --recurse-submodules {git_source} {self.name}")
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure(source_folder="hello")
+        cmake.configure(source_folder="hcs-logger")
         cmake.build()
 
     def package(self):
