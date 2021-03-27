@@ -32,17 +32,14 @@ class HcsLoggerConan(ConanFile):
         cmake.build()
 
     def package(self):
-        self.copy("*.hpp", src=f"{self.name}/include", dst="include")
-        self.copy("*.h", dst="include", src="hello")
-        self.copy("*hello.lib", dst="lib", keep_path=False)
+        self.copy("*.hpp", dst="include", src=f"{self.name}/include")
+        self.copy("*.h", dst="include", src=f"{self.name}/include")
+        self.copy("*hcs-logger.lib", dst="lib", keep_path=False)
         self.copy("*.dll", dst="bin", keep_path=False)
         self.copy("*.so", dst="lib", keep_path=False)
         self.copy("*.dylib", dst="lib", keep_path=False)
         self.copy("*.a", dst="lib", keep_path=False)
 
     def package_info(self):
-        self.cpp_info.libs = ["hello"]
-
-    def package_id(self):
-        # check this
-        self.info.header_only()
+        self.cpp_info.libs = ["libhcs-logger"]
+        self.cpp_info.includedirs = ["include/headcode/logger"]
