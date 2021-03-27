@@ -84,29 +84,37 @@ headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
 
 ## Philosophy
 
-All `headcode.space` software follows these directives:
+All `headcode.space` software follows these directives in that order:
 
-1. Provide very **high quality** C++ software. That's the topmost goal.
+1. Provide very **high quality** C++ software: the software does what it is meant to do
+   and never ever crashes or reports false results. It has a minimum of 90% testing code
+   coverage. That's the topmost goal.
 
-2. Provide appealing C++ software, i.e. software which is **easily read and understood**. 
+2. Provide appealing C++ software, i.e. software which is **easily read and understood**.
    Second goal.
 
-3. Provide software with **super minimal public interfaces**. I try to really provide the absolute 
-   minimum without any bloat. The users of the software should only include the main header file 
-   (e.g. `#include <headcode/logger/logger.hpp>`) and nothing else. These are self-contained and 
+3. Provide software with **super minimal public interfaces**. I try to really provide the absolute
+   minimum without any bloat. The users of the software should only include the main header file
+   (e.g. `#include <headcode/logger/logger.hpp>`) and nothing else. These are self-contained and
    rely only on C++ standard headers. No additional 3rd party headers required. Third goal.
-  
+
 4. Provide libraries and binaries with **little to no runtime dependencies**. Yet, linkage might
    require additional libraries (sometimes from `headcode.space` sometimes else). Whenever
    possible I strive to go for the *static libraries*, because a) the resulting binaries when
-   linked against these libraries have little to no runtime dependency and can be installed 
-   directly with a mere `copy` and b) they are smaller too, since the linkers tend to strip off 
+   linked against these libraries have little to no runtime dependency and can be installed
+   directly with a mere `copy` and b) they are smaller too, since the linkers tend to strip off
    stuff which is not needed.
 
-I'm by no means perfect. There's always room for improvements and there are sure still bugs.
-If you have any suggestions please drop in an email at https://gitlab.com/headcode.space/logger/-/issues.
+5. In reverse, using and `headcode.space` library or software should not impose and intrusive
+   dependencies on this particular software. It should be fairly easy to replace this software
+   with something else.
 
-SonarQube instance for hcs-logger: https://sonar.ddns.headcode.space/dashboard?id=hcs-logger.
+6. Be performant. Yes, speed is impressive too.
+
+I'm by no means perfect. There's always room for improvements and there are sure still bugs.
+If you have any suggestions please drop in an email at https://gitlab.com/headcode.space/benchmark/-/issues.
+
+SonarQube instance for hcs-benchmark: https://sonar.ddns.headcode.space/dashboard?id=hcs-logger.
 
 
 ## The API
@@ -323,7 +331,7 @@ int main(int argc, char ** argv) {
 .
 ├── 3rd                         3rd party buildtime libraries needed (likely as git submodules).
 ├── cmake                       CMake additional files.
-├── include                     Public header files. Add the path to this folder to your C++ search path.
+├── include                     Public header files. Add this folder to your C++ search path.
 │   └── headcode                
 │       └── logger              Here is the main include: <headcode/logger/logger.hpp>
 ├── src                         Main sources.
@@ -334,10 +342,12 @@ int main(int argc, char ** argv) {
 │   ├── shared                  Shared test data files.
 │   └── unit                    Unit tests.
 ├── tools                       Various tools for run-time or build-time.
-│   ├── docker                  Docker builder image definitions: Dockerfiles for various platforms to build.
+│   ├── conan                   Conan package manager files.
+│   ├── docker                  Dockerfiles for various platforms to build.
 │   └── package                 Package related files.
 ├── Changes.md                  Changes file.
 ├── CMakeLists.txt              The overall CMakeLists.txt.
+├── conanfile.txt               Conan package file.
 ├── Doxyfile                    Doxgen API documentation configuration.
 ├── LICENSE.txt                 The software license.
 └── README.md                   This file.
@@ -358,7 +368,9 @@ I provide binary installation packages for some operating systems
 - git
 - make
 - doxygen (with graphviz)
-- [googletest](https://github.com/google/googletest) (as git submodule)
+- [conan](https://conan.io) (Conan package manger)
+- [googletest](https://github.com/google/googletest) (as submodule)
+- optional: ninja-build (as an alternative to make)
 
 When cloning this project execute the following to clone submodules as well:
 
@@ -372,6 +384,16 @@ or simply clone with the `--recurse-submodule` option:
 $ git clone --recurse-submodules
 ```
 
+You may collect and install all dependencies on your own or use the [conan](https://conan.io) system.
+For the latter setup conan (initial one-time; skip this if you have prepared conan locally already)
+to bind to libstdc++11 ABI and add the official GitLab.com as remote:
+```bash
+$ conan profile new default --detect
+$ conan profile update settings.compiler.libcxx=libstdc++11 default
+$ conan remote add gitlab https://gitlab.com/api/v4/packages/conan
+```
+
+
 #### Native build
 
 hcs-logger is a [cmake](https://cmake.org) project with out-of-source builds in
@@ -382,6 +404,52 @@ $ mkdir build && cd build
 $ cmake ..
 $ make
 ```
+or with `ninja` installed:
+```bash
+$ mkdir build && cd build
+$ cmake -GNinja ..
+$ ninja
+```
+
+
+#### Docker build images
+
+The `tools/docker` folder contains Dockerfiles along with necessary software
+to be installed into the docker containers to create docker builder containers.
+These docker containers should be capable to build the software.
+
+The build target `docker_images` will build these images, provided the docker
+command is found on the system and the `SHELL` environment variable points to some
+POSIX like shell (bash, sh, zsh, ...). The variable `DOCKER_TAG` will be used as
+docker container tags.
+
+Example:
+```bash
+$ cd build
+$ cmake -GNinja -D DOCKER_TAG=foo_builder
+...
+$ ninja docker_images
+...
+$ docker images | grep hcs-benchmark
+REPOSITORY            TAG             IMAGE ID       CREATED         SIZE
+foo                   debian-buster   5db480e2bcd8   2 minutes ago   810MB
+foo                   fedora32        7f87de7b5e7b   2 minutes ago   1.48GB
+foo                   ubuntu-focal    64b74231cd90   2 minutes ago   885MB 
+```
+
+Then launch a docker builder like this:
+```bash
+$ docker run -it --rm --name foo-builder foo:debian-buster /bin/bash
+root@d192869e6fe6:/build#
+```
+
+In second terminal copy all sources into the container and run a "native" build
+there:
+```bash
+$ cd PROJECT-SOURCES
+$ docker cp . foo-builder:/build
+``` 
+
 
 ## Test
 
@@ -390,14 +458,20 @@ After compilation run ctest
 $ cd build
 $ ctest
 ```
-Or
+or
 ```bash
 $ cd build
 $ make test
 ```
+or with `ninja` installed:
+```bash
+$ cd build
+$ ninja test
+```
 
-_Note: Please check the [test files](test/unit/)  for documentation. 
-The tests are easy to read and tell you how the code is intended to be used._ 
+_Note: Please check the [test files](test/unit/) for documentation.
+The tests are easy to read and tell you how the code is intended to be used._
+
 
 ### Test Coverage
 
@@ -407,10 +481,15 @@ $ cd build
 $ cmake -D PROFILING_MODE_ENABLED=on ..
 ```
 
-Then compile as usual and run the tests. After the tests make the `run-gcovr` target: 
+Then compile as usual and run the tests. After the tests make the `run-gcovr` target:
 ```bash
 $ make test
 $ make run-gcovr
+```
+or with `ninja` installed:
+```bash
+$ ninja test
+$ ninja run-gcovr
 ```
 
 This will give you the test coverage on stdout as well as:
@@ -418,8 +497,6 @@ This will give you the test coverage on stdout as well as:
 * `gcovr-report.xml`: this is the gcovr report file in xml
 * `coverge-html`: this is the folder in which detailed html info of collected coverage resides
   (open up the file `coverage-html/index.html` in a browser of your choice)
-* `gcovr-sonarqube-report.xml`: the same as the `gcov-report.xml` but sprinkled with enough
-  fairy dust to make SonarQube swallow it.
 
 in the build folder.
 
@@ -458,7 +535,9 @@ $ make package
 * How to write a clever "Changes" file: https://keepachangelog.com/en/1.0.0/
 * Folder Convention: https://github.com/KriaSoft/Folder-Structure-Conventions
 
+
 ---
+
 
 Copyright (C) 2021 headcode.space e.U.  
 Oliver Maurhart <info@headcode.space>  

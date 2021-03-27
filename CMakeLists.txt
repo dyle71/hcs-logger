@@ -7,26 +7,12 @@
 # ------------------------------------------------------------
 
 
-# ------------------------------------------------------------
-# tl;dr - How to create a package - copy-paste to a shell:
-#
-# 1. git clone --recurse-submodules https://gitlab.com/headcode.space/logger.git
-# 2. cd logger
-# 3. mkdir build
-# 4. cd buld
-# 5.1) cmake -D CMAKE_BUILD_TYPE=Release -D CPACK_GENERATOR=DEB ..        # for DEB packages
-# - xor -
-# 5.2) cmake -D CMAKE_BUILD_TYPE=Release -D CPACK_GENERATOR=RPM ..        # for RPM packages
-# 6. CORES=`grep 'cpu cores' /proc/cpuinfo | awk '{ print $4 }' | head -n 1` make -j $CORES
-# 7. make package
-# ------------------------------------------------------------
-
-
 project(hcs-logger C CXX)
 cmake_minimum_required(VERSION 3.13.4)
 
 cmake_policy(SET CMP0075 NEW)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${HCS_CMAKE}")
+include(conan)
 
 if (CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Debug")
@@ -41,7 +27,7 @@ ENABLE_TESTING()
 
 set(VERSION_MAJOR "1")
 set(VERSION_MINOR "0")
-set(VERSION_PATCH "1")
+set(VERSION_PATCH "2")
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 
@@ -141,6 +127,8 @@ else()
     message(STATUS "Building without tests")
     message(STATUS "To enable tests invoke cmake with \"-D BUILD_TESTING=on\" arguments.")
 endif ()
+
+add_subdirectory(tools)
 
 
 # ------------------------------------------------------------

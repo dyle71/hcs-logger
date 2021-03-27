@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.0.1] - ...
+### Added
+- Support for ninja
+- Support for conan package manager
+
+## [1.0.1] - Lost
 ### Added
 - Encloses inner registry into headcode::logger namespace to avoid symbol conflict
 - Concurrent threading test.
@@ -15,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [Unreleased]: https://gitlab.com/headcode.space/logger/-/tree/develop
+[1.0.2]: https://gitlab.com/headcode.space/logger/-/releases/v1.0.2
+[1.0.1]: https://gitlab.com/headcode.space/logger/-/releases/v1.0.1
 [1.0.0]: https://gitlab.com/headcode.space/logger/-/releases/v1.0.0
 
 ---
