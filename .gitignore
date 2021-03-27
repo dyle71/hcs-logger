@@ -212,7 +212,8 @@ tags
 .scannerwork/
 
 # ---- no tool related ----
-build/
+/build/
+/conan/
 
 # ---- qtCreator.gitignore ----
 CMakeLists.txt.user*
