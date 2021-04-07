@@ -22,6 +22,9 @@ FileSink::FileSink(std::string file_url) : MutexSink{file_url} {
     URL url{file_url};
     if (url.IsValid() && (url.GetScheme() == "file")) {
         filename_ = url.GetPath().empty() ? "a.log" : url.GetPath();
+        if (url.GetPath().empty()) {
+            SetURL(std::string{"file:a.log"});
+        }
     }
 }
 

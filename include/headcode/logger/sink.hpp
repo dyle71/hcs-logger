@@ -203,6 +203,14 @@ protected:
      */
     explicit Sink(std::string url);
 
+    /**
+     * @brief   Applies a new URL.
+     * @param   url         the new URL to apply.
+     */
+    void SetURL(std::string url) {
+        url_ = std::move(url);
+    }
+
 private:
     /**
      * @brief   Gets the sink description.

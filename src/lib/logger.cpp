@@ -27,11 +27,11 @@ namespace headcode::logger {
  * @brief   Our logger registry.
  * The is the "database" of all known loggers.
  */
-struct Registry {
+struct LoggerRegistry {
     /**
      * @brief   The registry singleton.
      */
-    static Registry registry_;
+    static LoggerRegistry registry_;
 
     /**
      * @brief   Prevent race conditions.
@@ -56,35 +56,35 @@ struct Registry {
     /**
      * @brief   Constructor.
      */
-    Registry() : birth_{std::chrono::system_clock::now()} {
+    LoggerRegistry() : birth_{std::chrono::system_clock::now()} {
     }
 
     /**
      * @brief   Copy Constructor.
      */
-    Registry(Registry const &) = delete;
+    LoggerRegistry(LoggerRegistry const &) = delete;
 
     /**
      * @brief   Move Constructor.
      */
-    Registry(Registry &&) = delete;
+    LoggerRegistry(LoggerRegistry &&) = delete;
 
     /**
      * @brief   Destructor
      */
-    ~Registry() = default;
+    ~LoggerRegistry() = default;
 
     /**
      * @brief   Assignment
      * @return  this
      */
-    Registry & operator=(Registry const &) = delete;
+    LoggerRegistry & operator=(LoggerRegistry const &) = delete;
 
     /**
      * @brief   Move Assignment
      * @return  this
      */
-    Registry & operator=(Registry &&) = delete;
+    LoggerRegistry & operator=(LoggerRegistry &&) = delete;
 
     /**
      * @brief   Get a Read-Only lock --> many can read, no-one can write.
@@ -107,7 +107,7 @@ struct Registry {
 /**
  * @brief   Singleton storage.
  */
-Registry Registry::registry_;
+LoggerRegistry LoggerRegistry::registry_;
 
 
 }
@@ -176,9 +176,9 @@ std::string FixLoggerName(std::string name) {
 
 #ifdef DEBUG
 void LoggerRegistryPurge() {
-    auto lock = Registry::registry_.LockWrite();
-    Registry::registry_.loggers_.clear();
-    Registry::registry_.logger_count = 0;
+    auto lock = LoggerRegistry::registry_.LockWrite();
+    LoggerRegistry::registry_.loggers_.clear();
+    LoggerRegistry::registry_.logger_count = 0;
 }
 #endif
 
@@ -213,8 +213,8 @@ void Logger::AddSink(std::string sink_url) {
 
 
 std::chrono::system_clock::time_point Logger::GetBirth() {
-    auto lock = Registry::registry_.LockRead();
-    return Registry::registry_.birth_;
+    auto lock = LoggerRegistry::registry_.LockRead();
+    return LoggerRegistry::registry_.birth_;
 }
 
 
@@ -222,26 +222,26 @@ Logger * Logger::GetLogger(std::string name) {
 
     name = FixLoggerName(name);
 
-    auto lock_write = Registry::registry_.LockWrite();
+    auto lock_write = LoggerRegistry::registry_.LockWrite();
 
-    if (Registry::registry_.logger_count == 0) {
+    if (LoggerRegistry::registry_.logger_count == 0) {
 
         // create root logger
-        Registry::registry_.loggers_.clear();
-        auto logger = std::unique_ptr<Logger>(new Logger{std::string{}, Registry::registry_.logger_count++});
+        LoggerRegistry::registry_.loggers_.clear();
+        auto logger = std::unique_ptr<Logger>(new Logger{std::string{}, LoggerRegistry::registry_.logger_count++});
         if (name.empty()) {
             logger->SetSink("stderr:");
             logger->SetBarrier(Level::kWarning);
-            Registry::registry_.loggers_.emplace(name, std::move(logger));
+            LoggerRegistry::registry_.loggers_.emplace(name, std::move(logger));
         }
     }
 
-    auto iter = Registry::registry_.loggers_.find(name);
-    if (iter == Registry::registry_.loggers_.end()) {
-        auto logger = std::unique_ptr<Logger>(new Logger{name, Registry::registry_.logger_count++});
+    auto iter = LoggerRegistry::registry_.loggers_.find(name);
+    if (iter == LoggerRegistry::registry_.loggers_.end()) {
+        auto logger = std::unique_ptr<Logger>(new Logger{name, LoggerRegistry::registry_.logger_count++});
         logger->SetBarrier(Level::kUndefined);
-        Registry::registry_.loggers_.emplace(name, std::move(logger));
-        iter = Registry::registry_.loggers_.find(name);
+        LoggerRegistry::registry_.loggers_.emplace(name, std::move(logger));
+        iter = LoggerRegistry::registry_.loggers_.find(name);
     }
 
     return iter->second.get();
@@ -251,8 +251,8 @@ Logger * Logger::GetLogger(std::string name) {
 std::list<std::string> Logger::GetLoggers() {
 
     std::list<std::string> res;
-    auto lock_read = Registry::registry_.LockRead();
-    for (auto const & [_, logger] : Registry::registry_.loggers_) {
+    auto lock_read = LoggerRegistry::registry_.LockRead();
+    for (auto const & [_, logger] : LoggerRegistry::registry_.loggers_) {
         res.push_back(logger->GetName());
     }
 
@@ -274,10 +274,10 @@ Logger * Logger::GetParentLogger() const {
         return nullptr;
     }
 
-    auto lock_read = Registry::registry_.LockRead();
+    auto lock_read = LoggerRegistry::registry_.LockRead();
     for (auto const & name : ancestors_) {
-        auto iter = Registry::registry_.loggers_.find(name);
-        if (iter != Registry::registry_.loggers_.end()) {
+        auto iter = LoggerRegistry::registry_.loggers_.find(name);
+        if (iter != LoggerRegistry::registry_.loggers_.end()) {
             return iter->second.get();
         }
     }

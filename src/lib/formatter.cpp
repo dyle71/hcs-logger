@@ -99,19 +99,3 @@ std::list<std::string> Formatter::SplitMessageIntoLines(std::string const & mess
 
     return res;
 }
-
-
-std::string StandardFormatter::Format_(Event const & event) {
-
-    auto lines = SplitMessageIntoLines(event.str());
-    auto time_string = CreateTimeString(event);
-    auto level_string = CreateLevelString(event);
-    auto logger_string = CreateLoggerString(event);
-
-    std::stringstream ss;
-    for (auto const & line : lines) {
-        ss << time_string << " " << level_string << (logger_string.empty() ? "" : " ") << logger_string << ": " << line;
-    }
-
-    return ss.str();
-}

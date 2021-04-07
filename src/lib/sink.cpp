@@ -32,11 +32,11 @@ namespace headcode::logger {
  * @brief   Our sink registry.
  * The is the "database" of all known sinks.
  */
-struct Registry {
+struct SinkRegistry {
     /**
      * @brief   The registry singleton.
      */
-    static Registry registry_;
+    static SinkRegistry registry_;
 
     /**
      * @brief   Prevent race conditions.
@@ -51,34 +51,34 @@ struct Registry {
     /**
      * @brief   Constructor.
      */
-    Registry() = default;
+    SinkRegistry() = default;
 
     /**
      * @brief   Copy Constructor.
      */
-    Registry(Registry const &) = delete;
+    SinkRegistry(SinkRegistry const &) = delete;
 
     /**
      * @brief   Move Constructor.
      */
-    Registry(Registry &&) = delete;
+    SinkRegistry(SinkRegistry &&) = delete;
 
     /**
      * @brief   Destructor
      */
-    ~Registry() = default;
+    ~SinkRegistry() = default;
 
     /**
      * @brief   Assignment
      * @return  this
      */
-    Registry & operator=(Registry const &) = delete;
+    SinkRegistry & operator=(SinkRegistry const &) = delete;
 
     /**
      * @brief   Move Assignment
      * @return  this
      */
-    Registry & operator=(Registry &&) = delete;
+    SinkRegistry & operator=(SinkRegistry &&) = delete;
 
     /**
      * @brief   Get a Read-Only lock --> many can read, no-one can write.
@@ -98,6 +98,12 @@ struct Registry {
 };
 
 
+/**
+ * @brief   Singleton storage.
+ */
+SinkRegistry SinkRegistry::registry_;
+
+
 }
 
 
@@ -107,34 +113,34 @@ Sink::Sink(std::string url) : url_{std::move(url)}, formatter_{std::make_unique<
 
 Sink * Sink::GetSink(std::string url_string) {
 
-    auto lock = Registry::registry_.LockWrite();
+    auto lock = SinkRegistry::registry_.LockWrite();
 
     auto url = URL{url_string}.Normalize();
     if (!url.IsValid()) {
         return nullptr;
     }
 
-    auto iter = Registry::registry_.sinks_.find(url.GetURL());
-    if (iter == Registry::registry_.sinks_.end()) {
+    auto iter = SinkRegistry::registry_.sinks_.find(url.GetURL());
+    if (iter == SinkRegistry::registry_.sinks_.end()) {
 
         if (url.GetURL() == "stderr:") {
-            Registry::registry_.sinks_.emplace(url.GetURL(),
+            SinkRegistry::registry_.sinks_.emplace(url.GetURL(),
                                                std::make_unique<headcode::logger::ConsoleSink>(url.GetURL()));
         } else if (url.GetURL() == "stdout:") {
-            Registry::registry_.sinks_.emplace(url.GetURL(),
+            SinkRegistry::registry_.sinks_.emplace(url.GetURL(),
                                                std::make_unique<headcode::logger::ConsoleSink>(url.GetURL()));
         } else if (url.GetURL() == "syslog:") {
-            Registry::registry_.sinks_.emplace("syslog", std::make_unique<headcode::logger::SyslogSink>());
+            SinkRegistry::registry_.sinks_.emplace("syslog:", std::make_unique<headcode::logger::SyslogSink>());
         } else if (url.GetScheme() == "file") {
-            Registry::registry_.sinks_.emplace(url.GetURL(),
+            SinkRegistry::registry_.sinks_.emplace(url.GetURL(),
                                                std::make_unique<headcode::logger::FileSink>(url.GetURL()));
         } else if (url.GetURL() == "null:") {
-            Registry::registry_.sinks_.emplace(url.GetURL(), std::make_unique<headcode::logger::NullSink>());
+            SinkRegistry::registry_.sinks_.emplace(url.GetURL(), std::make_unique<headcode::logger::NullSink>());
         } else {
             return nullptr;
         }
 
-        iter = Registry::registry_.sinks_.find(url.GetURL());
+        iter = SinkRegistry::registry_.sinks_.find(url.GetURL());
     }
 
     return iter->second.get();
@@ -143,10 +149,10 @@ Sink * Sink::GetSink(std::string url_string) {
 
 std::vector<std::string> Sink::GetSinks() {
 
-    auto lock = Registry::registry_.LockRead();
+    auto lock = SinkRegistry::registry_.LockRead();
 
     std::vector<std::string> res;
-    for (auto & p : Registry::registry_.sinks_) {
+    for (auto & p : SinkRegistry::registry_.sinks_) {
         res.push_back(p.first);
     }
 
