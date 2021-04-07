@@ -65,16 +65,16 @@ headcode::logger::GetLogger("app.network.incoming")->SetBarrier(headcode::logger
 Example: different log levels for different outputs:
 ```c++
 // logfile: "my_app.log" (but only info, warnings and errors)
-auto file_sink = std::make_shared<headcode::logger::FileSink>("my_app.log");
+auto file_sink = headcode::logger::Sink::GetSink("file:my_app.log");
 file_sink->SetBarrier(headcode::logger::Level::kInfo);
 // and log to stderr too (including debug stuff)
-auto console_sink = std::make_shared<headcode::logger::ConsoleSink>();
+auto console_sink = headcode::logger::Sink::GetSink("stderr:");
 console_sink->SetBarrier(headcode::logger::Level::kDebug);
 
 // set sink: only 1 sink
-headcode::logger::GetLogger()->SetSink(file_sink);
+headcode::logger::GetLogger()->SetSink("file:my_app.log");
 // add sink: add another one
-headcode::logger::GetLogger()->AddSink(console_sink);
+headcode::logger::GetLogger()->AddSink("stderr:");
 // set allowed maximum log level, before passing on to sinks
 headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
 ```
@@ -124,7 +124,7 @@ The API is really small. There are
 * `Event`: That's the prime log event.
 * `Logger`: Objects of this class are the "administrators" of events. They examine events and redirect them to
   a number of `Sink`s.
-* `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a 
+* `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a `Formatter`.
 * `Formatter`: This class prepares the final output.
 
 After an installation you'll find a doxygen documentation in your usual `doc` folder, which provides more
@@ -216,37 +216,26 @@ A sink is anything an event will be finally pushed. There are:
 * `SyslogSink`: write to syslog.
 * `NullSink`: consume events, like `/dev/null`.
 
+Sinks are basically resources to write to. Therefore each sink is associated (and created) 
+with an URL. Also these resources are singletons in order to synchronize concurrent write
+access into the sinks (and don't mess up any output).
+
+The current URLs for sinks are:
+* `null:`: The null sink.
+* `stderr:`: A console sink pushing to stderr.
+* `stdout:`: A console sink pushing to stdout.
+* `file:`: A file sink. Note, you may pass absolute paths like `file:/var/log/myapp.log` and
+  `file:///var/log/myapp.log` or relative paths (to the current process working directory) like
+  `file:myapp.log`.
+* `syslog:`: A sink writing to the operating syslog.
+
 A logger may have any number of sinks attached. One can write to three log files, the terminal 
-and syslog in parallel. You can even attach two ConsoleSink if you want to.
+and syslog in parallel.
 
 A sink also has a barrier set like loggers. This is the "second firewall" for events to pass.
 The rational is, that you may have a single event source (the Logger object) but may want to
 pass on `Debug` events to a file, whereas `Critical` and `Warning` should also wind up in
 the syslog, yet you refrain in sweeping the syslog with the very same `Debug` messages.
-
-You can easily derive your own sink, e.g. a `NetworkSink` which passes on messages
-via UDP, like this:
-
-```c++
-#include <headcode/logger/logger.hpp>
-
-class NetworkSink : public headcode::logger::Sink {
-
-private:
-    std::string GetDescription_() const override {
-        return "My new, shiny NetworkSink";
-    }
-
-    void Log_(Event const & event) override {
-        // your code ...
-        std::string log_message = Format(event);
-        ...
-    }
-};
-
-...
-headcode::logger::Logger::GetLogger()->AddSink(std::make_shared<NetworkSink>());
-```
 
 
 ### Formatter
