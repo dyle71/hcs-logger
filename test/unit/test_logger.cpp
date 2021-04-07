@@ -6,16 +6,16 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
+#include <headcode/logger/logger.hpp>
+
 #include <gtest/gtest.h>
 
 #include <filesystem>
 #include <fstream>
 
-#include <headcode/logger/logger.hpp>
-
 
 TEST(Logger, empty) {
-    auto logger = headcode::logger::Logger::GetLogger({});
+    auto logger = headcode::logger::Logger::GetLogger();
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
     EXPECT_EQ(logger->GetId(), 0u);
@@ -70,7 +70,7 @@ TEST(Logger, list_loggers) {
     EXPECT_STREQ(logger_bar_baz->GetName().c_str(), "bar.baz");
 
     std::list<std::string> expected = {"<root>", "bar", "bar.baz", "foo"};
-    EXPECT_EQ(headcode::logger::Logger::GetRegisteredLoggers(), expected);
+    EXPECT_EQ(headcode::logger::Logger::GetLoggers(), expected);
 }
 
 
@@ -82,25 +82,17 @@ TEST(Logger, sinks) {
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
 
-    EXPECT_EQ(logger->GetSinks().size(), 1u);
-    logger->AddSink(std::make_shared<headcode::logger::NullSink>());
+    EXPECT_EQ(headcode::logger::Sink::GetSinks().size(), 1u);
+    logger->AddSink("null:");
     EXPECT_EQ(logger->GetSinks().size(), 2u);
-    logger->AddSink(std::make_shared<headcode::logger::NullSink>());
-    EXPECT_EQ(logger->GetSinks().size(), 3u);
-    auto sinks = logger->GetSinks();
-    EXPECT_EQ(sinks.size(), 3u);
-    sinks.clear();
-    EXPECT_EQ(sinks.size(), 0u);
-    EXPECT_EQ(logger->GetSinks().size(), 3u);
+    logger->AddSink("null:");
+    EXPECT_EQ(logger->GetSinks().size(), 2u);
 
-    logger->SetSink(std::make_shared<headcode::logger::NullSink>());
+    logger->SetSink("null:");
     EXPECT_EQ(logger->GetSinks().size(), 1u);
 
-    auto sink = std::make_shared<headcode::logger::NullSink>();
-    logger->AddSink(sink);
-    EXPECT_EQ(logger->GetSinks().size(), 2u);
-    logger->AddSink(sink);
-    EXPECT_EQ(logger->GetSinks().size(), 2u);
+    logger->AddSink("null");
+    EXPECT_EQ(logger->GetSinks().size(), 1u);
 }
 
 
@@ -266,7 +258,7 @@ TEST(Logger, same_instance) {
     auto logger_root_2 = headcode::logger::Logger::GetLogger({});
     ASSERT_TRUE(logger_root_2 != nullptr);
     EXPECT_STREQ(logger_root_2->GetName().c_str(), "<root>");
-    EXPECT_TRUE(logger_root_1.get() == logger_root_2.get());
+    EXPECT_TRUE(logger_root_1 == logger_root_2);
 
     auto logger_foo_1 = headcode::logger::Logger::GetLogger("foo");
     ASSERT_TRUE(logger_foo_1 != nullptr);
@@ -274,7 +266,7 @@ TEST(Logger, same_instance) {
     auto logger_foo_2 = headcode::logger::Logger::GetLogger("foo");
     ASSERT_TRUE(logger_foo_2 != nullptr);
     EXPECT_STREQ(logger_foo_2->GetName().c_str(), "foo");
-    EXPECT_TRUE(logger_foo_1.get() == logger_foo_2.get());
+    EXPECT_TRUE(logger_foo_1 == logger_foo_2);
 
     auto logger_foo_bar_1 = headcode::logger::Logger::GetLogger("foo.bar");
     ASSERT_TRUE(logger_foo_bar_1 != nullptr);
@@ -282,7 +274,7 @@ TEST(Logger, same_instance) {
     auto logger_foo_bar_2 = headcode::logger::Logger::GetLogger("foo.bar");
     ASSERT_TRUE(logger_foo_bar_2 != nullptr);
     EXPECT_STREQ(logger_foo_bar_2->GetName().c_str(), "foo.bar");
-    EXPECT_TRUE(logger_foo_bar_1.get() == logger_foo_bar_2.get());
+    EXPECT_TRUE(logger_foo_bar_1 == logger_foo_bar_2);
 
     EXPECT_FALSE(logger_root_1 == logger_foo_1);
     EXPECT_FALSE(logger_root_1 == logger_foo_2);
@@ -351,10 +343,10 @@ TEST(Logger, parent_sink) {
         std::filesystem::remove("a.log");
     }
 
+    logger->SetSink("file:a.log");
+    auto sink = headcode::logger::Sink::GetSink("file:a.log");
     auto formatter = std::make_unique<headcode::logger::SimpleFormatter>();
-    auto sink = std::make_shared<headcode::logger::FileSink>("a.log");
     sink->SetFormatter(std::move(formatter));
-    logger->SetSink(sink);
 
     auto logger_foo = headcode::logger::Logger::GetLogger("foo");
     ASSERT_TRUE(logger_foo != nullptr);

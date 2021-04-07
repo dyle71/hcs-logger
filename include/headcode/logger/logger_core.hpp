@@ -13,15 +13,19 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "level.hpp"
-#include "sink.hpp"
 
 
 /**
  * @brief   The headcode logger namespace
  */
 namespace headcode::logger {
+
+
+class Event;        //!< @brief Forward declaration of an event.
+class Sink;         //!< @brief Forward declaration of a sink.
 
 
 /**
@@ -73,12 +77,12 @@ namespace headcode::logger {
  */
 class Logger {
 
-    std::string name_;                              //!< @brief The name of this logger.
-    std::list<std::string> ancestors_;              //!< @brief All names of all parent loggers in order.
-    unsigned int id_{0};                            //!< @brief An id of this logger.
-    int barrier_{0};                                //!< @brief Log level barrier (see description).
-    std::list<std::shared_ptr<Sink>> sinks_;        //!< @brief All Sinks attached to this logger.
-    std::uint64_t events_logged_{0};                //!< @brief Number of events logged so far.
+    std::string name_;                          //!< @brief The name of this logger.
+    std::list<std::string> ancestors_;          //!< @brief All names of all parent loggers in order.
+    unsigned int id_{0};                        //!< @brief An id of this logger.
+    int barrier_{0};                            //!< @brief Log level barrier (see description).
+    std::vector<Sink *> sinks_;                 //!< @brief URLs of all Sinks attached to this logger.
+    std::uint64_t events_logged_{0};            //!< @brief Number of events logged so far.
 
 public:
     /**
@@ -109,9 +113,10 @@ public:
     /**
      * @brief   Adds a sink to the sinks of this logger.
      * If the sink is already in the list, the sink is not added.
-     * @param   sink        the sink to add.
+     * A nullptr sink is not accepted and rejected.
+     * @param   sink        URL of a sink to add.
      */
-    void AddSink(std::shared_ptr<Sink> const & sink);
+    void AddSink(std::string sink);
 
     /**
      * @brief   All the ancestors of this logger in order.
@@ -172,17 +177,24 @@ public:
      * a new instance will be created.
      *
      * Any leading and trailing '.' in the name are dropped.
+     * There is always the top most root logger with an empty name.
      *
      * @param   name        the name of the logger instance.
      * @return  The logger instance with that name.
      */
-    static std::shared_ptr<Logger> GetLogger(std::string name = {});
+    static Logger * GetLogger(std::string name = {});
+
+    /**
+     * @brief   Retrieves a list of all known loggers.
+     * @return  A list of all registered loggers.
+     */
+    [[nodiscard]] static std::list<std::string> GetLoggers();
 
     /**
      * @brief   Gets the next known parent logger.
      * @return  The next known, registered parent logger.
      */
-    [[nodiscard]] std::shared_ptr<Logger> GetParentLogger() const;
+    [[nodiscard]] Logger * GetParentLogger() const;
 
     /**
      * @brief   Returns the name of this logger instance.
@@ -190,18 +202,11 @@ public:
      */
     [[nodiscard]] std::string GetName() const;
 
-
-    /**
-     * @brief   Retrieves a list of all known loggers.
-     * @return  A list of all registered loggers.
-     */
-    [[nodiscard]] static std::list<std::string> GetRegisteredLoggers();
-
     /**
      * @brief   Gets all the sinks associated with this logger.
      * @return  All the sinks of this logger.
      */
-    [[nodiscard]] std::list<std::shared_ptr<Sink>> GetSinks() const {
+    [[nodiscard]] std::vector<Sink *> const & GetSinks() const {
         return sinks_;
     }
 
@@ -235,9 +240,10 @@ public:
     /**
      * @brief   Sets a single Sink.
      * This removes any previous sinks at this logger.
-     * @param   sink        the sink to set.
+     * A nullptr is not accepted but rejected.
+     * @param   sink        URL of the sink to set.
      */
-    void SetSink(std::shared_ptr<Sink> sink);
+    void SetSink(std::string sink);
 
 private:
     /**

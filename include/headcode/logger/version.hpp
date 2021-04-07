@@ -19,27 +19,11 @@
 
 
 /**
- * @brief   Version check for 1.0.0
+ * @brief   Version check for 1.1.0
  * @return  A value, representing the version.
  */
-inline std::uint32_t GetHCSLoggerVersion_1_0_0() {
-    return MAKE_VERSION(1, 0, 0);
-}
-
-/**
- * @brief   Version check for 1.0.1
- * @return  A value, representing the version.
- */
-inline std::uint32_t GetHCSLoggerVersion_1_0_1() {
-    return MAKE_VERSION(1, 0, 1);
-}
-
-/**
- * @brief   Version check for 1.0.2
- * @return  A value, representing the version.
- */
-inline std::uint32_t GetHCSLoggerVersion_1_0_2() {
-    return MAKE_VERSION(1, 0, 2);
+inline std::uint32_t GetHCSLoggerVersion_1_1_0() {
+    return MAKE_VERSION(1, 1, 0);
 }
 
 /**
@@ -52,7 +36,7 @@ namespace headcode::logger {
  * @return  A value, representing the current version.
  */
 inline std::uint32_t GetCurrentVersion() {
-    return GetHCSLoggerVersion_1_0_2();
+    return GetHCSLoggerVersion_1_1_0();
 }
 
 /**
@@ -60,7 +44,7 @@ inline std::uint32_t GetCurrentVersion() {
  * @return  a string holding the current version.
  */
 inline std::string GetVersionString() {
-    return "1.0.2";
+    return "1.1.0";
 }
 
 

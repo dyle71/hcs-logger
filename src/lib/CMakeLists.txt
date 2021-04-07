@@ -6,13 +6,21 @@
 # Oliver Maurhart <info@headcode.space>, https://www.headcode.space
 # ------------------------------------------------------------
 
-
 set(LOGGER_SRC
+
     event.cpp
     formatter.cpp
     level.cpp
     logger.cpp
     sink.cpp
+
+    formatter/color_dark_background_formatter.cpp
+    formatter/simple_formatter.cpp
+    formatter/standard_formatter.cpp
+
+    sink/console_sink.cpp
+    sink/file_sink.cpp
+    sink/syslog_sink.cpp
 )
 
 add_library(hcs-logger STATIC ${LOGGER_SRC})

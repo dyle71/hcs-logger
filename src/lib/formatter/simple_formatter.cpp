@@ -6,14 +6,13 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
-#ifndef HEADCODE_SPACE_LOGGER_LOGGER_HPP
-#define HEADCODE_SPACE_LOGGER_LOGGER_HPP
+#include <headcode/logger/formatter.hpp>
 
-#include "event.hpp"
-#include "formatter.hpp"
-#include "level.hpp"
-#include "logger_core.hpp"
-#include "sink.hpp"
-#include "version.hpp"
+#include <headcode/logger/event.hpp>
 
-#endif
+using namespace headcode::logger;
+
+
+std::string SimpleFormatter::Format_(Event const & event) {
+    return event.GetMessage();
+}

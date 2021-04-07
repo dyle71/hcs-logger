@@ -8,11 +8,16 @@
 
 #include <headcode/logger/logger_core.hpp>
 
+#include <headcode/logger/sink.hpp>
+
+#include <headcode/url/url.hpp>
+
 #include <map>
 #include <shared_mutex>
 #include <utility>
 
 using namespace headcode::logger;
+using namespace headcode::url;
 
 
 namespace headcode::logger {
@@ -22,8 +27,12 @@ namespace headcode::logger {
  * @brief   Our logger registry.
  * The is the "database" of all known loggers.
  */
-class Registry {
-public:
+struct Registry {
+    /**
+     * @brief   The registry singleton.
+     */
+    static Registry registry_;
+
     /**
      * @brief   Prevent race conditions.
      */
@@ -42,7 +51,7 @@ public:
     /**
      * @brief   All known loggers.
      */
-    std::map<std::string, std::shared_ptr<headcode::logger::Logger>> loggers_;
+    std::map<std::string, std::unique_ptr<headcode::logger::Logger>> loggers_;
 
     /**
      * @brief   Constructor.
@@ -95,6 +104,12 @@ public:
 };
 
 
+/**
+ * @brief   Singleton storage.
+ */
+Registry Registry::registry_;
+
+
 }
 
 
@@ -122,6 +137,7 @@ static std::list<std::string> CreateListOfAncestors(std::string name) {
 
     return res;
 }
+
 
 /**
  * @brief   Examine a logger name and make some corrections.
@@ -158,21 +174,11 @@ std::string FixLoggerName(std::string name) {
 }
 
 
-/**
- * @brief   Returns the Registry singleton.
- * @return  The one and only registry instance.
- */
-static Registry & GetRegistryInstance() {
-    static headcode::logger::Registry registry;
-    return registry;
-}
-
-
 #ifdef DEBUG
 void LoggerRegistryPurge() {
-    auto & registry = GetRegistryInstance();
-    registry.loggers_.clear();
-    registry.logger_count = 0;
+    auto lock = Registry::registry_.LockWrite();
+    Registry::registry_.loggers_.clear();
+    Registry::registry_.logger_count = 0;
 }
 #endif
 
@@ -182,7 +188,17 @@ Logger::Logger(std::string name, unsigned int id) : name_{std::move(name)}, id_(
 }
 
 
-void Logger::AddSink(std::shared_ptr<Sink> const & sink) {
+void Logger::AddSink(std::string sink_url) {
+
+    auto url = URL{sink_url}.Normalize();
+    if (!url.IsValid()) {
+        return;
+    }
+
+    auto sink = Sink::GetSink(url.GetURL());
+    if (sink == nullptr) {
+        return;
+    }
 
     bool present = false;
     for (auto iter = sinks_.begin(); iter != sinks_.end() && !present; ++iter) {
@@ -197,37 +213,50 @@ void Logger::AddSink(std::shared_ptr<Sink> const & sink) {
 
 
 std::chrono::system_clock::time_point Logger::GetBirth() {
-    auto const & registry = GetRegistryInstance();
-    return registry.birth_;
+    auto lock = Registry::registry_.LockRead();
+    return Registry::registry_.birth_;
 }
 
 
-std::shared_ptr<Logger> Logger::GetLogger(std::string name) {
+Logger * Logger::GetLogger(std::string name) {
 
     name = FixLoggerName(name);
-    auto & registry = GetRegistryInstance();
 
-    auto lock_write = registry.LockWrite();
+    auto lock_write = Registry::registry_.LockWrite();
 
-    if (registry.logger_count == 0) {
+    if (Registry::registry_.logger_count == 0) {
+
         // create root logger
-        registry.loggers_.clear();
-        auto logger = std::shared_ptr<Logger>(new Logger{name, registry.logger_count++});
+        Registry::registry_.loggers_.clear();
+        auto logger = std::unique_ptr<Logger>(new Logger{std::string{}, Registry::registry_.logger_count++});
         if (name.empty()) {
-            logger->SetSink(std::make_shared<ConsoleSink>());
+            logger->SetSink("stderr:");
             logger->SetBarrier(Level::kWarning);
-            registry.loggers_.emplace(name, logger);
+            Registry::registry_.loggers_.emplace(name, std::move(logger));
         }
     }
 
-    auto iter = registry.loggers_.find(name);
-    if (iter == registry.loggers_.end()) {
-        auto logger = std::shared_ptr<Logger>(new Logger{name, registry.logger_count++});
+    auto iter = Registry::registry_.loggers_.find(name);
+    if (iter == Registry::registry_.loggers_.end()) {
+        auto logger = std::unique_ptr<Logger>(new Logger{name, Registry::registry_.logger_count++});
         logger->SetBarrier(Level::kUndefined);
-        registry.loggers_.emplace(name, logger);
+        Registry::registry_.loggers_.emplace(name, std::move(logger));
+        iter = Registry::registry_.loggers_.find(name);
     }
 
-    return registry.loggers_[name];
+    return iter->second.get();
+}
+
+
+std::list<std::string> Logger::GetLoggers() {
+
+    std::list<std::string> res;
+    auto lock_read = Registry::registry_.LockRead();
+    for (auto const & [_, logger] : Registry::registry_.loggers_) {
+        res.push_back(logger->GetName());
+    }
+
+    return res;
 }
 
 
@@ -239,35 +268,21 @@ std::string Logger::GetName() const {
 }
 
 
-std::shared_ptr<Logger> Logger::GetParentLogger() const {
+Logger * Logger::GetParentLogger() const {
 
     if (name_.empty()) {
         return nullptr;
     }
 
-    auto & registry = GetRegistryInstance();
-    auto lock_read = registry.LockRead();
+    auto lock_read = Registry::registry_.LockRead();
     for (auto const & name : ancestors_) {
-        auto iter = registry.loggers_.find(name);
-        if (iter != registry.loggers_.end()) {
-            return iter->second;
+        auto iter = Registry::registry_.loggers_.find(name);
+        if (iter != Registry::registry_.loggers_.end()) {
+            return iter->second.get();
         }
     }
 
     return nullptr;
-}
-
-
-std::list<std::string> Logger::GetRegisteredLoggers() {
-
-    std::list<std::string> res;
-    auto & registry = GetRegistryInstance();
-    auto lock_read = registry.LockRead();
-    for (auto const & [_, logger] : registry.loggers_) {
-        res.push_back(logger->GetName());
-    }
-
-    return res;
 }
 
 
@@ -321,7 +336,14 @@ void Logger::SetBarrier(Level barrier) {
 }
 
 
-void Logger::SetSink(std::shared_ptr<Sink> sink) {
+void Logger::SetSink(std::string sink_url) {
+
+    auto url = URL{sink_url}.Normalize().GetURL();
+    auto sink = Sink::GetSink(url);
+    if (sink == nullptr) {
+        return;
+    }
+
     sinks_.clear();
     sinks_.push_back(sink);
 }

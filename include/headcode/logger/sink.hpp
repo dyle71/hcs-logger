@@ -9,11 +9,11 @@
 #ifndef HEADCODE_SPACE_LOGGER_SINK_HPP
 #define HEADCODE_SPACE_LOGGER_SINK_HPP
 
-#include <mutex>
-
-#include "event.hpp"
-#include "formatter.hpp"
 #include "level.hpp"
+
+#include <memory>
+#include <string>
+#include <vector>
 
 
 /**
@@ -22,23 +22,58 @@
 namespace headcode::logger {
 
 
+class Event;            //!< @brief Forward declaration of an event.
+class Formatter;        //!< @brief Forward declaration of a formatter.
+
+
 /**
  * @brief   A sink is the place all the log message go to: a file, the console, syslog...
  * A sink barrier is set to Level::kDebug on default, meaning that it would
  * pass on any log event.
+ *
+ * Sinks are identified along their URLs. Current known URLs are:
+ *
+ *  - "null:"                       Null sink. A sink which consumes all log events.
+ *  - "stdout:"                     A console sink which writes to stdout.
+ *  - "stderr:"                     A console sink which writes to stderr.
+ *  - "file:///path/to/a/file"      A sink which writes into a file (add authority and path to this url if needed).
+ *  - "syslog:"                     A sink which writes to syslog.
+ *
+ * Examples:
+ * @code
+ *      auto sink = headcode::log::Sink::GetSink("null:");      // A sink which consumes all events.
+ * @endcode
+ *
+ * @code
+ *      auto sink = headcode::log::Sink::GetSink("stderr:");    // A regular stderr sink.
+ * @endcode
+ *
+ * @code
+ *      auto sink = headcode::log::Sink::GetSink("stdout:");    // A sink writing to stdout sink.
+ * @endcode
+ *
+ * @code
+ *      // Creates a log file: /var/log/myapp.log.
+ *      auto sink = headcode::log::Sink::GetSink("file:///var/log/myapp.log");
+ * @endcode
+ *
+ * @code
+ *      // Creates a log file: log/myapp.log (relative to current working directory).
+ *      auto sink = headcode::log::Sink::GetSink("file:log/myapp.log");
+ * @endcode
+ *
+ * @code
+ *      auto sink = headcode::log::Sink::GetSink("syslog:");    // A sink pushing to syslog.
+ * @endcode
  */
 class Sink {
 
+    std::string url_;                                     //!< @brief The URL of this sink.
     int barrier_{static_cast<int>(Level::kDebug)};        //!< @brief Log level barrier (see description).
     std::unique_ptr<Formatter> formatter_;                //!< @brief The formatter used for this sink.
     std::uint64_t events_logged_{0};                      //!< @brief Number of events logged so far.
 
 public:
-    /**
-     * @brief   Constructor
-     */
-    Sink();
-
     /**
      * @brief   Copy constructor
      */
@@ -47,7 +82,7 @@ public:
     /**
      * @brief   Move constructor
      */
-    Sink(Sink &&) = delete;
+    Sink(Sink &&) = default;
 
     /**
      * @brief   Destructor
@@ -62,7 +97,7 @@ public:
     /**
      * @brief   Move operator.
      */
-    Sink & operator=(Sink &&) = delete;
+    Sink & operator=(Sink &&) = default;
 
     /**
      * @brief   Applies the sink's formatter to the event message.
@@ -110,8 +145,30 @@ public:
      * @brief   Returns the formatter of this sink.
      * @return  The Formatter instance of this link.
      */
-    [[nodiscard]] Formatter const * GetFormatter() const {
-        return formatter_.get();
+    [[nodiscard]] Formatter const & GetFormatter() const {
+        return *(formatter_.get());
+    }
+
+    /**
+     * @brief   Gets or create the sink with the given URL.
+     * If the sink is new, then we remember the sink internally.
+     * @param   url         the URL of the sink to create.
+     * @return  A sink object instance or nullptr if the URL scheme is unknown.
+     */
+    static Sink * GetSink(std::string url);
+
+    /**
+     * @brief   Retrieves a list of all known sinks.
+     * @return  A list of all registered sinks URLs.
+     */
+    [[nodiscard]] static std::vector<std::string> GetSinks();
+
+    /**
+     * @brief   Retrieves the URL of this sink.
+     * @return  The URL of this sink.
+     */
+    [[nodiscard]] std::string const & GetURL() const {
+        return url_;
     }
 
     /**
@@ -134,10 +191,17 @@ public:
 
     /**
      * @brief   Sets the formatter of this sink.
-     * A nullptr is not accepted and rejected.
+     * A nullptr is not accepted and refused to been applied.
      * @param   formatter       the new formatter of this sink.
      */
     void SetFormatter(std::unique_ptr<Formatter> && formatter);
+
+protected:
+    /**
+     * @brief   Constructor
+     * @param   url         the url by which this sink will be identified.
+     */
+    explicit Sink(std::string url);
 
 private:
     /**
@@ -152,147 +216,6 @@ private:
      * @param   event       the event to log.
      */
     virtual void Log_(Event const & event) = 0;
-};
-
-
-/**
- * @brief   A sink which consumes all events and does not do anything at all with it.
- */
-class NullSink : public Sink {
-
-private:
-    /**
-     * @brief   Gets the sink description.
-     * @return  A human readable description of this sink.
-     */
-    [[nodiscard]] std::string GetDescription_() const override {
-        return "NullSink";
-    }
-
-    /**
-     * @brief   This does the actual logging.
-     * @param   event       the event to log.
-     */
-    void Log_(Event const & event) override;
-};
-
-
-/**
- * @brief   A sink which sends all event messages to a file.
- *
- * The file is not truncated. Log messages will be appended at the end.
- * If a filename is missing, then "a.log" will be created.
- *
- *
- * Example: log all to a file "app.log":
- *
- * @code
- * #include <fstream>
- * #include <memory>
- *
- * #include <headcode/logger/logger.hpp>
- *
- * using namespace headcode::logger;
- *
- *
- * void SetupLogging() {
- *     auto file_sink = std::make_shared<FileSink>("app.log");
- *     Logger::GetLogger()->SetSink(file_sink);
- *     Logger::GetLogger()->SetBarrier(Level::kDebug);
- * }
- *
- *
- * int main(int , char **) {
- *
- *     SetupLogging();
- *
- *     Debug() << "This is a debug message." << std::endl;
- *     Info() << "... and this is a warning message." << std::endl;
- *     Warning() << "See yourself been warned." << std::endl;
- *     Critical() << "Let's panic!" << std::endl;
- *
- *     return 0;
- * }
- * @endcode
- */
-class FileSink : public Sink {
-
-    std::string filename_;        //!< @brief The name of the file to write to.
-    std::mutex mutex_;            //!< @brief mutex to write to file.
-
-public:
-    /**
-     * @brief   Constructs a sink which pushes the log messages into a stream.
-     * @param   filename        Name of the file to write to.
-     */
-    explicit FileSink(std::string filename = {});
-
-private:
-    /**
-     * @brief   Gets the sink description.
-     * @return  A human readable description of this sink.
-     */
-    [[nodiscard]] std::string GetDescription_() const override;
-
-    /**
-     * @brief   This does the actual logging.
-     * @param   event       the event to log.
-     */
-    void Log_(Event const & event) override;
-};
-
-
-/**
- * @brief   Pushes all log messages to stderr.
- */
-class ConsoleSink : public Sink {
-
-    static std::mutex console_mutex_;        //!< @brief mutex to write to console.
-
-public:
-    /**
-     * @brief   Constructs a sink which pushes the log messages into a stream.
-     */
-    explicit ConsoleSink();
-
-private:
-    /**
-     * @brief   Gets the sink description.
-     * @return  A human readable description of this sink.
-     */
-    [[nodiscard]] std::string GetDescription_() const override;
-
-    /**
-     * @brief   This does the actual logging.
-     * @param   event       the event to log.
-     */
-    void Log_(Event const & event) override;
-};
-
-
-/**
- * @brief   Pushes all log messages to syslog.
- */
-class SyslogSink : public Sink {
-
-public:
-    /**
-     * @brief   Constructs a sink which pushes the log messages into a stream.
-     */
-    explicit SyslogSink();
-
-private:
-    /**
-     * @brief   Gets the sink description.
-     * @return  A human readable description of this sink.
-     */
-    [[nodiscard]] std::string GetDescription_() const override;
-
-    /**
-     * @brief   This does the actual logging.
-     * @param   event       the event to log.
-     */
-    void Log_(Event const & event) override;
 };
 
 

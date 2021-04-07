@@ -6,14 +6,14 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
+#include <headcode/logger/logger.hpp>
+
+#include <gtest/gtest.h>
+
 #include <fstream>
 #include <filesystem>
 #include <functional>
 #include <thread>
-
-#include <gtest/gtest.h>
-
-#include <headcode/logger/logger.hpp>
 
 
 TEST(Threading, concurrent) {
@@ -24,9 +24,9 @@ TEST(Threading, concurrent) {
 
     auto logger = headcode::logger::Logger::GetLogger();
     ASSERT_TRUE(logger != nullptr);
-    auto sink = std::make_shared<headcode::logger::FileSink>("thread.log");
+    logger->SetSink("file:thread.log");
+    auto sink = headcode::logger::Sink::GetSink("file:thread.log");
     sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
-    logger->SetSink(sink);
     logger->SetBarrier(headcode::logger::Level::kDebug);
 
     std::string log_message{"Log message of a thread."};

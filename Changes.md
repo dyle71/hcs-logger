@@ -6,14 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.1] - ...
+## [1.1.0] - ...
 ### Added
-- Support for ninja
-- Support for conan package manager
+- Support for ninja.
+- Support for conan package manager.
+- Sinks are now identified with their URL.
 
 ## [1.0.1] - Lost
 ### Added
-- Encloses inner registry into headcode::logger namespace to avoid symbol conflict
+- Encloses inner registry into headcode::logger namespace to avoid symbol conflict.
 - Concurrent threading test.
 
 ## [1.0.0] - 2021-02-03

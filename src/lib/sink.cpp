@@ -8,23 +8,149 @@
 
 #include <headcode/logger/sink.hpp>
 
-#include <iostream>
-#include <fstream>
-#include <utility>
+#include "sink/console_sink.hpp"
+#include "sink/file_sink.hpp"
+#include "sink/null_sink.hpp"
+#include "sink/syslog_sink.hpp"
 
-// Currently very Linux/Unix centered...
-#include <syslog.h>
-#include <unistd.h>
-
+#include <headcode/logger/event.hpp>
 #include <headcode/logger/formatter.hpp>
 
+#include <headcode/url/url.hpp>
+
+#include <map>
+#include <utility>
+
 using namespace headcode::logger;
+using namespace headcode::url;
 
 
-std::mutex headcode::logger::ConsoleSink::console_mutex_;
+namespace headcode::logger {
 
 
-Sink::Sink() : formatter_{std::make_unique<StandardFormatter>()} {
+/**
+ * @brief   Our sink registry.
+ * The is the "database" of all known sinks.
+ */
+struct Registry {
+    /**
+     * @brief   The registry singleton.
+     */
+    static Registry registry_;
+
+    /**
+     * @brief   Prevent race conditions.
+     */
+    mutable std::shared_mutex mutex_;
+
+    /**
+     * @brief   All known sinks.
+     */
+    std::map<std::string, std::unique_ptr<headcode::logger::Sink>> sinks_;
+
+    /**
+     * @brief   Constructor.
+     */
+    Registry() = default;
+
+    /**
+     * @brief   Copy Constructor.
+     */
+    Registry(Registry const &) = delete;
+
+    /**
+     * @brief   Move Constructor.
+     */
+    Registry(Registry &&) = delete;
+
+    /**
+     * @brief   Destructor
+     */
+    ~Registry() = default;
+
+    /**
+     * @brief   Assignment
+     * @return  this
+     */
+    Registry & operator=(Registry const &) = delete;
+
+    /**
+     * @brief   Move Assignment
+     * @return  this
+     */
+    Registry & operator=(Registry &&) = delete;
+
+    /**
+     * @brief   Get a Read-Only lock --> many can read, no-one can write.
+     * @return  A lock which enables us to read states of this object in a thread-safe manner.
+     */
+    [[nodiscard]] std::shared_lock<std::shared_mutex> LockRead() const {
+        return std::shared_lock<std::shared_mutex>(mutex_);
+    }
+
+    /**
+     * @brief   Get a Read-Write exclusive lock --> we have exclusive access.
+     * @return  A lock which enables us to read and write states of this object in a thread-safe manner.
+     */
+    [[nodiscard]] std::unique_lock<std::shared_mutex> LockWrite() {
+        return std::unique_lock<std::shared_mutex>(mutex_);
+    }
+};
+
+
+}
+
+
+Sink::Sink(std::string url) : url_{std::move(url)}, formatter_{std::make_unique<StandardFormatter>()} {
+}
+
+
+Sink * Sink::GetSink(std::string url_string) {
+
+    auto lock = Registry::registry_.LockWrite();
+
+    auto url = URL{url_string}.Normalize();
+    if (!url.IsValid()) {
+        return nullptr;
+    }
+
+    auto iter = Registry::registry_.sinks_.find(url.GetURL());
+    if (iter == Registry::registry_.sinks_.end()) {
+
+        if (url.GetURL() == "stderr:") {
+            Registry::registry_.sinks_.emplace(url.GetURL(),
+                                               std::make_unique<headcode::logger::ConsoleSink>(url.GetURL()));
+        } else if (url.GetURL() == "stdout:") {
+            Registry::registry_.sinks_.emplace(url.GetURL(),
+                                               std::make_unique<headcode::logger::ConsoleSink>(url.GetURL()));
+        } else if (url.GetURL() == "syslog:") {
+            Registry::registry_.sinks_.emplace("syslog", std::make_unique<headcode::logger::SyslogSink>());
+        } else if (url.GetScheme() == "file") {
+            Registry::registry_.sinks_.emplace(url.GetURL(),
+                                               std::make_unique<headcode::logger::FileSink>(url.GetURL()));
+        } else if (url.GetURL() == "null:") {
+            Registry::registry_.sinks_.emplace(url.GetURL(), std::make_unique<headcode::logger::NullSink>());
+        } else {
+            return nullptr;
+        }
+
+        iter = Registry::registry_.sinks_.find(url.GetURL());
+    }
+
+    return iter->second.get();
+}
+
+
+std::vector<std::string> Sink::GetSinks() {
+
+    auto lock = Registry::registry_.LockRead();
+
+    std::vector<std::string> res;
+    for (auto & p : Registry::registry_.sinks_) {
+        res.push_back(p.first);
+    }
+
+    return res;
 }
 
 
@@ -65,94 +191,4 @@ void Sink::SetFormatter(std::unique_ptr<Formatter> && formatter) {
 
 void Sink::SetBarrier(Level barrier) {
     SetBarrier(static_cast<int>(barrier));
-}
-
-
-void NullSink::Log_(Event const &) {
-}
-
-
-FileSink::FileSink(std::string filename) : Sink{}, filename_{std::move(filename)} {
-    if (filename_.empty()) {
-        filename_ = "a.log";
-    }
-}
-
-
-std::string FileSink::GetDescription_() const {
-    return std::string{"FileSink to "} + filename_;
-}
-
-
-void FileSink::Log_(Event const & event) {
-
-    std::lock_guard<std::mutex> lock{mutex_};
-
-    // We may keep the file open for a better performance. I have to test.
-    std::ofstream stream;
-    stream.open(filename_, std::ios::out | std::ios::app);
-    stream << Format(event);
-    stream.flush();
-}
-
-
-ConsoleSink::ConsoleSink() : Sink{} {
-    if (isatty(2) == 1) {
-        SetFormatter(std::make_unique<ColorDarkBackgroundFormatter>());
-    }
-}
-
-
-std::string ConsoleSink::GetDescription_() const {
-    return std::string{"ConsoleSink"};
-}
-
-
-void ConsoleSink::Log_(Event const & event) {
-    std::lock_guard<std::mutex> lock{console_mutex_};
-    std::cerr << Format(event);
-    std::cerr.flush();
-}
-
-
-SyslogSink::SyslogSink() : Sink{} {
-    SetFormatter(std::make_unique<SimpleFormatter>());
-}
-
-
-std::string SyslogSink::GetDescription_() const {
-    return std::string{"SyslogSink"};
-}
-
-
-void SyslogSink::Log_(Event const & event) {
-
-    // We may keep the syslog open for a better performance. I have to test.
-    openlog(nullptr, LOG_PID, LOG_USER);
-
-    int priority;
-    switch (event.GetLevel()) {
-
-        case static_cast<int>(Level::kCritical):
-            priority = LOG_CRIT;
-            break;
-
-        case static_cast<int>(Level::kWarning):
-            priority = LOG_WARNING;
-            break;
-
-        case static_cast<int>(Level::kInfo):
-            priority = LOG_INFO;
-            break;
-
-        case static_cast<int>(Level::kDebug):
-            priority = LOG_DEBUG;
-            break;
-
-        default:
-            priority = LOG_ERR;
-    }
-
-    syslog(priority, "%s", Format(event).c_str());
-    closelog();
 }
