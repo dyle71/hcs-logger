@@ -6,13 +6,10 @@
 # Oliver Maurhart <info@headcode.space>, https://www.headcode.space
 # ------------------------------------------------------------
 
-include_directories(${CMAKE_SOURCE_DIR}/include ${TEST_BASE_DIR} ${GTEST_INCLUDE_DIR} ${CMAKE_BINARY_DIR})
-link_directories("${GTEST_LIBRARY_PATH};${GMOCK_LIBRARY_PATH}")
-set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
-
+include_directories(${CMAKE_SOURCE_DIR}/include;${TEST_BASE_DIR};${CMAKE_BINARY_DIR})
 set(BENCHMARK_TEST_SRC
     test_benchmark.cpp
 )
 
 add_executable(benchmark-tests ${BENCHMARK_TEST_SRC} ${BENCHMARK_TEST_OPENSSL_SRC})
-target_link_libraries(benchmark-tests hcs-logger gtest gtest_main gmock gmock_main ${CMAKE_REQUIRED_LIBRARIES})
+target_link_libraries(benchmark-tests hcs-logger ${CONAN_LIBS_GTEST} ${CMAKE_REQUIRED_LIBRARIES})

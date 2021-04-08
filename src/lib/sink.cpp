@@ -8,24 +8,20 @@
 
 #include <headcode/logger/sink.hpp>
 
-#include <iostream>
-#include <fstream>
-#include <utility>
-
-// Currently very Linux/Unix centered...
-#include <syslog.h>
-#include <unistd.h>
-
+#include <headcode/logger/event.hpp>
 #include <headcode/logger/formatter.hpp>
 
+#include <headcode/url/url.hpp>
+
 using namespace headcode::logger;
+using namespace headcode::url;
 
 
-std::mutex headcode::logger::ConsoleSink::console_mutex_;
-
-
-Sink::Sink() : formatter_{std::make_shared<StandardFormatter>()} {
+Sink::Sink(std::string url) : url_{std::move(url)}, formatter_{std::make_unique<StandardFormatter>()} {
 }
+
+
+Sink::~Sink() = default;
 
 
 std::string Sink::Format(Event const & event) {
@@ -55,102 +51,14 @@ void Sink::SetBarrier(int barrier) {
 }
 
 
-void Sink::SetFormatter(std::shared_ptr<Formatter> const & formatter) {
-    if (formatter != nullptr) {
-        formatter_ = formatter;
+void Sink::SetFormatter(std::unique_ptr<Formatter> && formatter) {
+    if (formatter.get() != nullptr) {
+        formatter_.reset();
+        formatter_.swap(formatter);
     }
 }
+
 
 void Sink::SetBarrier(Level barrier) {
     SetBarrier(static_cast<int>(barrier));
-}
-
-
-void NullSink::Log_(Event const &) {
-}
-
-
-FileSink::FileSink(std::string filename) : Sink{}, filename_{std::move(filename)} {
-    if (filename_.empty()) {
-        filename_ = "a.log";
-    }
-}
-
-
-std::string FileSink::GetDescription_() const {
-    return std::string{"FileSink to "} + filename_;
-}
-
-
-void FileSink::Log_(Event const & event) {
-
-    std::lock_guard<std::mutex> lock{mutex_};
-
-    // We may keep the file open for a better performance. I have to test.
-    std::ofstream stream;
-    stream.open(filename_, std::ios::out | std::ios::app);
-    stream << Format(event);
-    stream.flush();
-}
-
-
-ConsoleSink::ConsoleSink() : Sink{} {
-    if (isatty(2) == 1) {
-        SetFormatter(std::make_shared<ColorDarkBackgroundFormatter>());
-    }
-}
-
-
-std::string ConsoleSink::GetDescription_() const {
-    return std::string{"ConsoleSink"};
-}
-
-
-void ConsoleSink::Log_(Event const & event) {
-    std::lock_guard<std::mutex> lock{console_mutex_};
-    std::cerr << Format(event);
-    std::cerr.flush();
-}
-
-
-SyslogSink::SyslogSink() : Sink{} {
-    SetFormatter(std::make_shared<SimpleFormatter>());
-}
-
-
-std::string SyslogSink::GetDescription_() const {
-    return std::string{"SyslogSink"};
-}
-
-
-void SyslogSink::Log_(Event const & event) {
-
-    // We may keep the syslog open for a better performance. I have to test.
-    openlog(nullptr, LOG_PID, LOG_USER);
-
-    int priority;
-    switch (event.GetLevel()) {
-
-        case static_cast<int>(Level::kCritical):
-            priority = LOG_CRIT;
-            break;
-
-        case static_cast<int>(Level::kWarning):
-            priority = LOG_WARNING;
-            break;
-
-        case static_cast<int>(Level::kInfo):
-            priority = LOG_INFO;
-            break;
-
-        case static_cast<int>(Level::kDebug):
-            priority = LOG_DEBUG;
-            break;
-
-        default:
-            priority = LOG_ERR;
-    }
-
-    syslog(priority, "%s", Format(event).c_str());
-    closelog();
 }

@@ -6,18 +6,54 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
+#include <headcode/logger/logger.hpp>
+
+#include <gtest/gtest.h>
+
 #include <fstream>
 #include <filesystem>
 #include <regex>
 
-#include <gtest/gtest.h>
 
-#include <headcode/logger/logger.hpp>
+TEST(Sink, default_producers) {
+    // Enforces registration of all default sink producers.
+    headcode::logger::Logger::GetLogger({});
+    auto producers = headcode::logger::SinkFactory::GetProducerList();
+    EXPECT_EQ(producers.size(), 4u);
+}
+
+
+TEST(Sink, null_regular) {
+    auto sink = headcode::logger::SinkFactory::Create("null:");
+    EXPECT_NE(sink.get(), nullptr);
+}
+
+
+TEST(Sink, stderr_regular) {
+    auto sink = headcode::logger::SinkFactory::Create("stderr:");
+    EXPECT_NE(sink, nullptr);
+    EXPECT_EQ(sink.get(), headcode::logger::SinkFactory::Create("stderr:").get());
+}
+
+
+TEST(Sink, stdout_regular) {
+    auto sink = headcode::logger::SinkFactory::Create("stdout:");
+    EXPECT_NE(sink, nullptr);
+    EXPECT_EQ(sink.get(), headcode::logger::SinkFactory::Create("stdout:").get());
+}
+
+
+TEST(Sink, file_regular) {
+    auto sink = headcode::logger::SinkFactory::Create("file:a.log");
+    EXPECT_NE(sink.get(), nullptr);
+    EXPECT_EQ(sink.get(), headcode::logger::SinkFactory::Create("file:a.log").get());
+    EXPECT_NE(sink.get(), headcode::logger::SinkFactory::Create("file:b.log").get());
+}
 
 
 TEST(Sink, barrier) {
 
-    auto sink = std::make_shared<headcode::logger::NullSink>();
+    auto sink = headcode::logger::SinkFactory::Create("null:");
 
     EXPECT_EQ(sink->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
     sink->SetBarrier(headcode::logger::Level::kDebug);
@@ -54,8 +90,8 @@ TEST(Sink, file) {
     }
 
     {
-        auto sink = std::make_shared<headcode::logger::FileSink>("test.log");
-        sink->SetFormatter(std::make_shared<headcode::logger::SimpleFormatter>());
+        auto sink = headcode::logger::SinkFactory::Create("file:test.log");
+        sink->SetFormatter(std::make_unique<headcode::logger::SimpleFormatter>());
 
         auto event_debug = headcode::logger::Debug();
         event_debug << "This is a debug message." << std::endl;
@@ -96,36 +132,27 @@ TEST(Sink, description) {
     headcode::logger::Event event{1};
     event << "This is an event";
 
-    auto null_sink = headcode::logger::NullSink{};
-    ASSERT_FALSE(null_sink.GetDescription().empty());
-    EXPECT_STREQ(null_sink.GetDescription().c_str(), "NullSink");
-    null_sink.Log(event);
-    EXPECT_GT(null_sink.GetEventsLogged(), 0u);
+    auto null_sink = headcode::logger::SinkFactory::Create("null:");
+    ASSERT_FALSE(null_sink->GetDescription().empty());
+    EXPECT_STREQ(null_sink->GetDescription().c_str(), "NullSink");
+    EXPECT_STREQ(null_sink->GetURL().c_str(), "null:");
+    null_sink->Log(event);
+    EXPECT_GT(null_sink->GetEventsLogged(), 0u);
+    EXPECT_NE(null_sink, headcode::logger::SinkFactory::Create("null:"));
 
-    auto file_sink = headcode::logger::FileSink{};
-    ASSERT_FALSE(file_sink.GetDescription().empty());
-    EXPECT_STREQ(file_sink.GetDescription().c_str(), "FileSink to a.log");
-    file_sink.Log(event);
-    EXPECT_GT(file_sink.GetEventsLogged(), 0u);
+    auto file_sink = headcode::logger::SinkFactory::Create("file:");
+    ASSERT_FALSE(file_sink->GetDescription().empty());
+    EXPECT_STREQ(file_sink->GetDescription().c_str(), "FileSink to a.log");
+    EXPECT_STREQ(file_sink->GetURL().c_str(), "file:a.log");
+    file_sink->Log(event);
+    EXPECT_GT(file_sink->GetEventsLogged(), 0u);
 
-    auto console_sink = headcode::logger::ConsoleSink{};
-    ASSERT_FALSE(console_sink.GetDescription().empty());
-    EXPECT_STREQ(console_sink.GetDescription().c_str(), "ConsoleSink");
-    console_sink.Log(event);
-    EXPECT_GT(console_sink.GetEventsLogged(), 0u);
-}
-
-
-TEST(Sink, fomatters) {
-
-    auto a_sink = std::make_shared<headcode::logger::FileSink>("a.log");
-
-    EXPECT_NE(a_sink->GetFormatter(), nullptr);
-    a_sink->SetFormatter(nullptr);
-    EXPECT_NE(a_sink->GetFormatter(), nullptr);
-    auto a_formatter = std::make_shared<headcode::logger::StandardFormatter>();
-    a_sink->SetFormatter(a_formatter);
-    EXPECT_EQ(a_sink->GetFormatter(), a_formatter);
+    auto console_sink = headcode::logger::SinkFactory::Create("stderr:");
+    ASSERT_FALSE(console_sink->GetDescription().empty());
+    EXPECT_STREQ(console_sink->GetDescription().c_str(), "ConsoleSink to stderr:");
+    EXPECT_STREQ(console_sink->GetURL().c_str(), "stderr:");
+    console_sink->Log(event);
+    EXPECT_GT(console_sink->GetEventsLogged(), 0u);
 }
 
 
@@ -137,11 +164,11 @@ TEST(Sink, multiple) {
         }
     }
 
-    auto a_sink = std::make_shared<headcode::logger::FileSink>("a.log");
-    auto b_sink = std::make_shared<headcode::logger::FileSink>("b.log");
-    auto c_sink = std::make_shared<headcode::logger::FileSink>("c.log");
-    auto d_sink = std::make_shared<headcode::logger::FileSink>("d.log");
-    auto e_sink = std::make_shared<headcode::logger::FileSink>("e.log");
+    auto a_sink = headcode::logger::SinkFactory::Create("file:a.log");
+    auto b_sink = headcode::logger::SinkFactory::Create("file:b.log");
+    auto c_sink = headcode::logger::SinkFactory::Create("file:c.log");
+    auto d_sink = headcode::logger::SinkFactory::Create("file:d.log");
+    auto e_sink = headcode::logger::SinkFactory::Create("file:e.log");
 
     auto logger = headcode::logger::Logger::GetLogger();
     logger->SetSink(a_sink);
@@ -150,11 +177,11 @@ TEST(Sink, multiple) {
     logger->AddSink(d_sink);
     logger->AddSink(e_sink);
 
-    a_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    b_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    c_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    d_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
-    e_sink->SetFormatter(std::make_shared<headcode::logger::StandardFormatter>());
+    a_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    b_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    c_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    d_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
+    e_sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
 
     logger->SetBarrier(headcode::logger::Level::kDebug);
     EXPECT_EQ(logger->GetBarrier(), static_cast<int>(headcode::logger::Level::kDebug));
@@ -224,10 +251,9 @@ TEST(Sink, multiple) {
 
 TEST(Sink, syslog) {
 
-    auto sink = std::make_shared<headcode::logger::SyslogSink>();
+    auto sink = headcode::logger::SinkFactory::Create("syslog:");
     EXPECT_STREQ(sink->GetDescription().c_str(), "SyslogSink");
     headcode::logger::Logger::GetLogger()->SetSink(sink);
-
 
     headcode::logger::Debug() << "This is a debug message.";
     headcode::logger::Info() << "This is an info message.";
@@ -251,10 +277,10 @@ TEST(Sink, force_color_output) {
         std::filesystem::remove("a.log");
     }
 
-    auto sink = std::make_shared<headcode::logger::FileSink>("a.log");
+    auto sink = headcode::logger::SinkFactory::Create("file:a.log");
     headcode::logger::Logger::GetLogger()->SetBarrier(1000);
     headcode::logger::Logger::GetLogger()->SetSink(sink);
-    sink->SetFormatter(std::make_shared<headcode::logger::ColorDarkBackgroundFormatter>());
+    sink->SetFormatter(std::make_unique<headcode::logger::ColorDarkBackgroundFormatter>());
 
     headcode::logger::Critical() << "This critical event should be in color.";
     headcode::logger::Warning() << "This warning event should be in color.";

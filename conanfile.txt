@@ -7,8 +7,10 @@
 # ------------------------------------------------------------
 
 [requires]
-#hcs-benchmark/1.1.0@headcode.space+benchmark/stable
-#blah
+
+[build_requires]
+gtest/1.10.0
+hcs-url/1.0.1@headcode.space+url/stable
 
 [generators]
 cmake

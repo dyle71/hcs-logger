@@ -18,15 +18,8 @@ TEST(Version, regular) {
 }
 
 
-TEST(Version, V1_0_0) {
-    std::uint32_t version = MAKE_VERSION(1, 0, 0);
-    EXPECT_EQ(static_cast<unsigned int>((1) << 24 | (0) << 16 | (0)), version);
-    EXPECT_EQ(GetHCSLoggerVersion_1_0_0(), version);
-}
-
-
-TEST(Version, V1_0_1) {
-    std::uint32_t version = MAKE_VERSION(1, 0, 1);
-    EXPECT_EQ(static_cast<unsigned int>((1) << 24 | (0) << 16 | (1)), version);
-    EXPECT_EQ(GetHCSLoggerVersion_1_0_1(), version);
+TEST(Version, V2_0_0) {
+    std::uint32_t version = MAKE_VERSION(2, 0, 0);
+    EXPECT_EQ(static_cast<unsigned int>((2) << 24 | (0) << 16 | (0)), version);
+    EXPECT_EQ(GetHCSLoggerVersion_2_0_0(), version);
 }

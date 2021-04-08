@@ -64,8 +64,10 @@ void NormalFlowFile() {
     if (std::filesystem::exists("a.log")) {
         std::filesystem::remove("a.log");
     }
+
     headcode::logger::Logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
-    headcode::logger::Logger::GetLogger()->SetSink(std::make_shared<headcode::logger::FileSink>("a.log"));
+    auto sink = headcode::logger::SinkFactory::Create("file:a.log");
+    headcode::logger::Logger::GetLogger()->SetSink(sink);
 
     auto start = std::chrono::system_clock::now();
     std::uint64_t loop_count = 100'000;
@@ -89,7 +91,8 @@ void PrefetchFlowFile() {
     }
     auto logger = headcode::logger::Logger::GetLogger();
     logger->SetBarrier(headcode::logger::Level::kDebug);
-    logger->SetSink(std::make_shared<headcode::logger::FileSink>("a.log"));
+    auto sink = headcode::logger::SinkFactory::Create("file:a.log");
+    logger->SetSink(sink);
 
     auto start = std::chrono::system_clock::now();
     std::uint64_t loop_count = 100'000;

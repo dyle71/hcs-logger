@@ -29,6 +29,22 @@ int main(int argc, char ** argv) {
 }
 ```
 
+To enable debug messages right from the start **and** duplicate messages also 
+to a local file `app.log`:
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    auto file_sink = SinkFactory::Create("file:app.log");
+    Logger::GetLogger()->AddSink(file_sink);
+    Logger::GetLogger()->SetBarrier(Level::kDebug);
+    Debug{} << "Hello World!";
+    return 0;
+}
+```
+
 That said, `hcs-logger` can do some more things:
 
 Features:
@@ -40,43 +56,54 @@ from hcs-logger these are all different `Logger` instances.
 
 Example:
 ```c++
+using namespace headcode::logger;
+
 // turn off all messages from "network"
-headcode::logger::GetLogger("network")->SetBarrier(headcode::logger::Level::kSilent);
+GetLogger("network")->SetBarrier(Level::kSilent);
 // ... but turn all message from "database" on:
-headcode::logger::GetLogger("database")->SetBarrier(headcode::logger::Level::kDebug);
+GetLogger("database")->SetBarrier(Level::kDebug);
 ...
 // This will not be shown
-headcode::logger::Debug("network") << "Got a debug message while doing network stuff...";
+Debug{"network"} << "Got a debug message while doing network stuff...";
 // This will be printed
-headcode::logger::Debug("database") << "Doing database stuff now...";
+Debug{"database"} << "Doing database stuff now...";
 ```
 
 * Loggers (aka logging subsystems) are hierarchical ordered with the dot `.` delimiter.
 
 Example: turn off each and every message but warnings and critical, yet also debug for a subsystem:
 ```c++
-headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kWarning);
-headcode::logger::GetLogger("app.network")->SetBarrier(headcode::logger::Level::kSilent);
-headcode::logger::GetLogger("app.network.incoming")->SetBarrier(headcode::logger::Level::kDebug);
+using namespace headcode::logger;
+
+GetLogger()->SetBarrier(Level::kWarning);
+GetLogger("app.network")->SetBarrier(Level::kSilent);
+GetLogger("app.network.incoming")->SetBarrier(Level::kDebug);
 ```
 
 * Loggers can have any numbers of sinks associated with additional barriers.
 
+Every sink may or may not push the log message, depending on the barrier. So, every
+log message must first pass the logger barrier settings and then additional the sink 
+setting.
+
 Example: different log levels for different outputs:
 ```c++
+using namespace headcode::logger;
+
 // logfile: "my_app.log" (but only info, warnings and errors)
-auto file_sink = std::make_shared<headcode::logger::FileSink>("my_app.log");
+auto file_sink = SinkFactory::Create("file:my_app.log");
 file_sink->SetBarrier(headcode::logger::Level::kInfo);
+
 // and log to stderr too (including debug stuff)
-auto console_sink = std::make_shared<headcode::logger::ConsoleSink>();
+auto console_sink = SinkFactory::Create("stderr:");
 console_sink->SetBarrier(headcode::logger::Level::kDebug);
 
 // set sink: only 1 sink
-headcode::logger::GetLogger()->SetSink(file_sink);
+GetLogger()->SetSink(file_sink);
 // add sink: add another one
-headcode::logger::GetLogger()->AddSink(console_sink);
+GetLogger()->AddSink(console_sink);
 // set allowed maximum log level, before passing on to sinks
-headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
+GetLogger()->SetBarrier(Level::kDebug);
 ```
 
 * Different formatting for different sinks (e.g. console, file, syslog, ...)
@@ -112,7 +139,7 @@ All `headcode.space` software follows these directives in that order:
 6. Be performant. Yes, speed is impressive too.
 
 I'm by no means perfect. There's always room for improvements and there are sure still bugs.
-If you have any suggestions please drop in an email at https://gitlab.com/headcode.space/benchmark/-/issues.
+If you have any suggestions please drop in an email at https://gitlab.com/headcode.space/logger/-/issues.
 
 SonarQube instance for hcs-benchmark: https://sonar.ddns.headcode.space/dashboard?id=hcs-logger.
 
@@ -124,11 +151,12 @@ The API is really small. There are
 * `Event`: That's the prime log event.
 * `Logger`: Objects of this class are the "administrators" of events. They examine events and redirect them to
   a number of `Sink`s.
-* `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a 
+* `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a `Formatter`.
+* `SinkFactory`: This creates a sink based on an URL.
 * `Formatter`: This class prepares the final output.
 
 After an installation you'll find a doxygen documentation in your usual `doc` folder, which provides more
-details.
+API details.
 
 
 ### Events
@@ -212,41 +240,28 @@ The root logger (with no name) is the parent of all and will always be created.
 A sink is anything an event will be finally pushed. There are:
 
 * `FileSink`: write into a file, aka a log-file.
-* `ConsoleSink`: write to a terminal via `stderr`.
+* `ConsoleSink`: write to a terminal via `stderr` (or `stdout`)
 * `SyslogSink`: write to syslog.
 * `NullSink`: consume events, like `/dev/null`.
 
+Sinks are basically resources to write to. The `SinkFactory` creates sinks on demand.
+
+The current URLs for sinks are:
+* `null:`: The null sink.
+* `stderr:`: A console sink pushing to stderr.
+* `stdout:`: A console sink pushing to stdout.
+* `file:`: A file sink. Note, you may pass absolute paths like `file:/var/log/myapp.log` and
+  `file:///var/log/myapp.log` or relative paths (to the current process working directory) like
+  `file:myapp.log`.
+* `syslog:`: A sink writing to the operating syslog.
+
 A logger may have any number of sinks attached. One can write to three log files, the terminal 
-and syslog in parallel. You can even attach two ConsoleSink if you want to.
+and syslog in parallel. 
 
 A sink also has a barrier set like loggers. This is the "second firewall" for events to pass.
 The rational is, that you may have a single event source (the Logger object) but may want to
 pass on `Debug` events to a file, whereas `Critical` and `Warning` should also wind up in
-the syslog, yet you refrain in sweeping the syslog with the very same `Debug` messages.
-
-You can easily derive your own sink, e.g. a `NetworkSink` which passes on messages
-via UDP, like this:
-
-```c++
-#include <headcode/logger/logger.hpp>
-
-class NetworkSink : public headcode::logger::Sink {
-
-private:
-    std::string GetDescription_() const override {
-        return "My new, shiny NetworkSink";
-    }
-
-    void Log_(Event const & event) override {
-        // your code ...
-        std::string log_message = Format(event);
-        ...
-    }
-};
-
-...
-headcode::logger::Logger::GetLogger()->AddSink(std::make_shared<NetworkSink>());
-```
+the syslog, yet you refrain in flooding the syslog with the very same `Debug` messages.
 
 
 ### Formatter
@@ -277,14 +292,14 @@ on or off.
 
 using namespace headcode::logger;
 
-void foo() {
+void only_debug() {
     Debug{} << "This is a debug message of foo, but routed to the main logger.";
     Debug{"foo"} << "This is a debug message of foo, yet addressed to the 'foo' logger.";
     Debug{"foo.child"} << "This is a debug message of foo.child.";
 }
 
 
-void bar() {
+void mixed_events() {
     Critical{} << "bar() made a critical. The number is: " << 42;
     Warn{} << "Pressure raising... to " << 3.1415;
     Info{} << "All ok.";
@@ -294,32 +309,139 @@ void bar() {
 
 int main(int argc, char ** argv) {
 
-    // only critical and warnings of bar() are pushed, foo() remains silent
-    foo();
-    bar();
+    // only critical and warnings are pushed (no debug in the output)
+    only_debug();
+    mixed_events();
     
     // activate also debug messages: raise the barrier to debug ==> everything is pushed
     Logger::GetLogger()->SetBarrier(Level::kDebug);
-    
-    foo();
-    bar();
+    only_debug();
+    mixed_events();
     
     // now turn off ALL messages associated with logger "foo" but keep "foo.child" alive for debug.
     Logger::GetLogger("foo")->SetBarrier(Level::kSilent);
     Logger::GetLogger("foo.child")->SetBarrier(Level::kDebug);
-    
-    foo();
-    bar();
+    only_debug();
+    mixed_events();
     
     // tell 'foo.child' to use the same as 'foo' (which is kSilent) again.
     Logger::GetLogger("foo.child")->SetBarrier(Level::kUndefined);
-
-    foo();
-    bar();
+    only_debug();
+    mixed_events();
     
     // finally a multi-line example: each line will be prefixed
-    Info() << "The quick brown\n" << "fox jumped over\n" << "a minimum of " << 1337 << "\nlazy dogs." << std::endl;
+    Info() << "The quick brown\n" 
+           << "fox jumped over\n"
+           << "a minimum of " 
+           << 1337 
+           << "\nlazy dogs." 
+           << std::endl;
 
+    return 0;
+}
+```
+
+### Creating a new Sink
+
+You may easily create a new sink by registering a `SinkProducer`. The `SinkFactory`
+maintains a list of known sink producers, which in turn creates sinks.
+
+**Example: create a UDP sink.**
+
+1. Create the Sink class
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+#include <string>
+
+class UDPSink : public headcode::logger::Sink {
+    
+    sockaddr_in destination;
+
+public:
+    UDPSink(std::string url) : Sink{url} {
+        ParseURL(url);
+    }
+
+private:
+
+    std::string GetDescription_() const override {
+        return "My UDP Log sink";
+    }
+
+    void Log_(Event const &) override;
+};
+```
+
+Any object of this class will have automatically the `StandardFormatter` assigned
+which creates a multiline log with timestamps. You may change the formatter to something
+else if you want.
+
+```c++
+void UDPSink::ParseURL(std::string url) {
+    // convert an "udp://host:port" to a sockaddr_in ...
+    sockaddr_in = ...
+}
+
+
+void UDPSink::Log_(Event const & event) {
+    
+    std::string payload = Format(event);
+    
+    // send via UDP (operating system details not shown)
+    int socket_fd = socket(....);
+    if (sendto(socket_fd, payload.data(), payload.size(), ....)) {
+    }
+    close(socket_fd);
+}
+```
+
+2. Register a producer for this sink:
+
+```c++
+struct UDPSinkProducer : public SinkFactory::Producer {
+
+    // Creates a new sink.
+    std::shared_ptr<Sink> Create(std::string const & url) override {
+        return std::make_shared<UDPSink>(url);
+    }
+
+    // Names this producer.
+    std::string GetId() const override {
+        return "UDPSink Producer";
+    }
+
+    // Called by the SinkFactory to test if we can operate on the given URL.
+    bool Match(std::string const & url) const override {
+        return url.substr(0, 6) == "udp://";
+    }
+};
+```
+
+3. Finally log anything remotely
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+// the UDPSink class
+#include "udp_sink.hpp"
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+
+    // Let the sink factory create UDP Sinks from now on
+    SinkFactory::Register(std::make_unique<UDPSinkProducer>());
+    
+    // Add an UDP sink to our standard logger
+    auto sink = SinkFactory::Create("udp://example.logger.host:1234");
+    GetLogger()->AddSink(sink);
+    
+    // Enable also debug messages
+    GetLogger()->SetBarrier(Level::kDebug);
+    
+    Debug{} << "Hello remote host!";
     return 0;
 }
 ```
@@ -329,7 +451,6 @@ int main(int argc, char ** argv) {
 
 ```
 .
-├── 3rd                         3rd party buildtime libraries needed (likely as git submodules).
 ├── cmake                       CMake additional files.
 ├── include                     Public header files. Add this folder to your C++ search path.
 │   └── headcode                
@@ -369,7 +490,6 @@ I provide binary installation packages for some operating systems
 - make
 - doxygen (with graphviz)
 - [conan](https://conan.io) (Conan package manger)
-- [googletest](https://github.com/google/googletest) (as submodule)
 - optional: ninja-build (as an alternative to make)
 
 When cloning this project execute the following to clone submodules as well:
@@ -501,7 +621,7 @@ This will give you the test coverage on stdout as well as:
 in the build folder.
 
 
-## Installable package creation
+## Installable system package creation
 
 This project supports the creation of `DEB` and `RPM` files. This is done by specifying
 the `CPACK_GENERATOR` while configuring the project.
@@ -515,6 +635,7 @@ $ make
 ...
 $ make package
 ```
+(or use `ninja` in place of `make` if you use the Ninja generator)
 
 To create an installable `RPM`:
 ```bash
@@ -524,6 +645,24 @@ $ cmake -D CMAKE_BUILD_TYPE=Release -D CPACK_GENERATOR=RPM ..
 $ make
 ...
 $ make package
+```
+(or use `ninja` in place of `make` if you use the Ninja generator)
+
+
+## Conan packages
+
+To create and install conan packages locally, call
+```bash
+$ cd build
+$ make conan 
+```
+
+You may want to tweak the package labeling by setting `CONAN_USER` and `CONAN_CHANNEL` arguments
+in cmake call prior like this:
+```bash
+$ cd build
+$ cmake -D CONAN_USER=${USER} -D CONAN_CHANNEL="testing" ..
+$ make conan 
 ```
 
 

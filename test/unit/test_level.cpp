@@ -6,9 +6,9 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
-#include <gtest/gtest.h>
-
 #include <headcode/logger/logger.hpp>
+
+#include <gtest/gtest.h>
 
 
 TEST(Level, regular) {

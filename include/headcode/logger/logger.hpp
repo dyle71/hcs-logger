@@ -9,13 +9,12 @@
 #ifndef HEADCODE_SPACE_LOGGER_LOGGER_HPP
 #define HEADCODE_SPACE_LOGGER_LOGGER_HPP
 
-
 #include "event.hpp"
 #include "formatter.hpp"
 #include "level.hpp"
 #include "logger_core.hpp"
 #include "sink.hpp"
+#include "sink_factory.hpp"
 #include "version.hpp"
-
 
 #endif

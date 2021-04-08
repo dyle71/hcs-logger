@@ -15,8 +15,7 @@ using namespace headcode::logger;
 
 
 void SetupLogging() {
-    auto file_sink = std::make_shared<FileSink>();
-    Logger::GetLogger()->SetSink(file_sink);
+    Logger::GetLogger()->SetSink(headcode::logger::SinkFactory::Create("file:"));
     Logger::GetLogger()->SetBarrier(Level::kDebug);
 }
 

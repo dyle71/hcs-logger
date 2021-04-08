@@ -9,13 +9,12 @@
 #ifndef HEADCODE_SPACE_LOGGER_EVENT_HPP
 #define HEADCODE_SPACE_LOGGER_EVENT_HPP
 
+#include "level.hpp"
+
 #include <chrono>
-#include <memory>
 #include <string>
 #include <sstream>
 #include <utility>
-
-#include "level.hpp"
 
 
 /**
@@ -24,8 +23,7 @@
 namespace headcode::logger {
 
 
-// fwd
-class Logger;
+class Logger;        //!< @brief Forward declaration of an event.
 
 
 /**
@@ -62,7 +60,7 @@ class Logger;
 class Event : public std::stringstream {
 
     std::chrono::system_clock::time_point time_point_;        //!< @brief When the event happened.
-    std::shared_ptr<Logger> logger_;                          //!< @brief The logger the event is assigned.
+    Logger * logger_;                                         //!< @brief The logger the event is assigned.
     int level_;                                               //!< @brief Log level value (see level.hpp)
     std::chrono::microseconds since_start_;                   //!< @brief Microseconds since start of logger subsystem
 
@@ -86,14 +84,14 @@ public:
      * @param   level               The log level (see level.hpp)
      * @param   logger              The logger this event is addressed to.
      */
-    Event(Level level, std::shared_ptr<Logger> logger);
+    Event(Level level, Logger * logger);
 
     /**
      * @brief   Constructor.
      * @param   level               The log level (see level.hpp)
      * @param   logger              The logger this event is addressed to.
      */
-    Event(int level, std::shared_ptr<Logger> logger);
+    Event(int level, Logger * logger);
 
     /**
      * @brief   Copy constructor.
@@ -142,7 +140,7 @@ public:
      * @brief   Gets the logger this event is assigned to.
      * @return  The logger of this event.
      */
-    std::shared_ptr<Logger> & GetLogger() {
+    Logger * GetLogger() {
         return logger_;
     }
 
@@ -150,7 +148,7 @@ public:
      * @brief   Gets the logger this event is assigned to.
      * @return  The logger of this event.
      */
-    std::shared_ptr<Logger> const & GetLogger() const {
+    Logger const * GetLogger() const {
         return logger_;
     }
 
@@ -189,7 +187,7 @@ public:
      * @brief   Constructor.
      * @param   logger              The logger this event is addressed to.
      */
-    explicit Critical(std::shared_ptr<Logger> logger) : Event(Level::kCritical, std::move(logger)) {
+    explicit Critical(Logger * logger) : Event(Level::kCritical, logger) {
     }
 };
 
@@ -211,7 +209,7 @@ public:
      * @brief   Constructor.
      * @param   logger              The logger this event is addressed to.
      */
-    explicit Warning(std::shared_ptr<Logger> logger) : Event(Level::kWarning, std::move(logger)) {
+    explicit Warning(Logger * logger) : Event(Level::kWarning, logger) {
     }
 };
 
@@ -233,7 +231,7 @@ public:
      * @brief   Constructor.
      * @param   logger              The logger this event is addressed to.
      */
-    explicit Info(std::shared_ptr<Logger> logger) : Event(Level::kInfo, std::move(logger)) {
+    explicit Info(Logger * logger) : Event(Level::kInfo, logger) {
     }
 };
 
@@ -255,7 +253,7 @@ public:
      * @brief   Constructor.
      * @param   logger              The logger this event is addressed to.
      */
-    explicit Debug(std::shared_ptr<Logger> logger) : Event(Level::kDebug, std::move(logger)) {
+    explicit Debug(Logger * logger) : Event(Level::kDebug, logger) {
     }
 };
 

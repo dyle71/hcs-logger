@@ -12,13 +12,14 @@
 #include <list>
 #include <string>
 
-#include "event.hpp"
-
 
 /**
  * @brief   The headcode logger namespace
  */
 namespace headcode::logger {
+
+
+class Event;        //!< @brief Forward declaration of an event.
 
 
 /**
@@ -116,9 +117,7 @@ private:
      * @param   event           the log event data.
      * @return  The string to push to the Sink instance.
      */
-    std::string Format_(Event const & event) override {
-        return event.GetMessage();
-    }
+    std::string Format_(Event const & event) override;
 };
 
 

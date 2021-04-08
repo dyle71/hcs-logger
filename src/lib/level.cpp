@@ -6,9 +6,9 @@
  * Oliver Maurhart <info@headcode.space>, https://www.headcode.space
  */
 
-#include <array>
-
 #include <headcode/logger/level.hpp>
+
+#include <array>
 
 
 /**
