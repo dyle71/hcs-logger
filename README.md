@@ -40,43 +40,54 @@ from hcs-logger these are all different `Logger` instances.
 
 Example:
 ```c++
+using namespace headcode::logger;
+
 // turn off all messages from "network"
-headcode::logger::GetLogger("network")->SetBarrier(headcode::logger::Level::kSilent);
+GetLogger("network")->SetBarrier(Level::kSilent);
 // ... but turn all message from "database" on:
-headcode::logger::GetLogger("database")->SetBarrier(headcode::logger::Level::kDebug);
+GetLogger("database")->SetBarrier(Level::kDebug);
 ...
 // This will not be shown
-headcode::logger::Debug("network") << "Got a debug message while doing network stuff...";
+Debug{"network"} << "Got a debug message while doing network stuff...";
 // This will be printed
-headcode::logger::Debug("database") << "Doing database stuff now...";
+Debug{"database"} << "Doing database stuff now...";
 ```
 
 * Loggers (aka logging subsystems) are hierarchical ordered with the dot `.` delimiter.
 
 Example: turn off each and every message but warnings and critical, yet also debug for a subsystem:
 ```c++
-headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kWarning);
-headcode::logger::GetLogger("app.network")->SetBarrier(headcode::logger::Level::kSilent);
-headcode::logger::GetLogger("app.network.incoming")->SetBarrier(headcode::logger::Level::kDebug);
+using namespace headcode::logger;
+
+GetLogger()->SetBarrier(Level::kWarning);
+GetLogger("app.network")->SetBarrier(Level::kSilent);
+GetLogger("app.network.incoming")->SetBarrier(Level::kDebug);
 ```
 
 * Loggers can have any numbers of sinks associated with additional barriers.
 
+Every sink may or may not push the log message, depending on the barrier. So, every
+log message must first pass the logger barrier settings and then additional the sink 
+setting.
+
 Example: different log levels for different outputs:
 ```c++
+using namespace headcode::logger;
+
 // logfile: "my_app.log" (but only info, warnings and errors)
-auto file_sink = headcode::logger::Sink::GetSink("file:my_app.log");
+auto file_sink = SinkFactory::Create("file:my_app.log");
 file_sink->SetBarrier(headcode::logger::Level::kInfo);
+
 // and log to stderr too (including debug stuff)
-auto console_sink = headcode::logger::Sink::GetSink("stderr:");
+auto console_sink = SinkFactory::Create("stderr:");
 console_sink->SetBarrier(headcode::logger::Level::kDebug);
 
 // set sink: only 1 sink
-headcode::logger::GetLogger()->SetSink("file:my_app.log");
+GetLogger()->SetSink(file_sink);
 // add sink: add another one
-headcode::logger::GetLogger()->AddSink("stderr:");
+GetLogger()->AddSink(console_sink);
 // set allowed maximum log level, before passing on to sinks
-headcode::logger::GetLogger()->SetBarrier(headcode::logger::Level::kDebug);
+GetLogger()->SetBarrier(Level::kDebug);
 ```
 
 * Different formatting for different sinks (e.g. console, file, syslog, ...)
@@ -125,10 +136,11 @@ The API is really small. There are
 * `Logger`: Objects of this class are the "administrators" of events. They examine events and redirect them to
   a number of `Sink`s.
 * `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a `Formatter`.
+* `SinkFactory`: This can create a sink based on an URL.
 * `Formatter`: This class prepares the final output.
 
 After an installation you'll find a doxygen documentation in your usual `doc` folder, which provides more
-details.
+API details.
 
 
 ### Events
@@ -212,13 +224,11 @@ The root logger (with no name) is the parent of all and will always be created.
 A sink is anything an event will be finally pushed. There are:
 
 * `FileSink`: write into a file, aka a log-file.
-* `ConsoleSink`: write to a terminal via `stderr`.
+* `ConsoleSink`: write to a terminal via `stderr` (or `stdout`)
 * `SyslogSink`: write to syslog.
 * `NullSink`: consume events, like `/dev/null`.
 
-Sinks are basically resources to write to. Therefore each sink is associated (and created) 
-with an URL. Also these resources are singletons in order to synchronize concurrent write
-access into the sinks (and don't mess up any output).
+Sinks are basically resources to write to. The `SinkFactory` creates sinks on demand.
 
 The current URLs for sinks are:
 * `null:`: The null sink.
@@ -230,12 +240,12 @@ The current URLs for sinks are:
 * `syslog:`: A sink writing to the operating syslog.
 
 A logger may have any number of sinks attached. One can write to three log files, the terminal 
-and syslog in parallel.
+and syslog in parallel. 
 
 A sink also has a barrier set like loggers. This is the "second firewall" for events to pass.
 The rational is, that you may have a single event source (the Logger object) but may want to
 pass on `Debug` events to a file, whereas `Critical` and `Warning` should also wind up in
-the syslog, yet you refrain in sweeping the syslog with the very same `Debug` messages.
+the syslog, yet you refrain in flooding the syslog with the very same `Debug` messages.
 
 
 ### Formatter
@@ -266,14 +276,14 @@ on or off.
 
 using namespace headcode::logger;
 
-void foo() {
+void only_debug() {
     Debug{} << "This is a debug message of foo, but routed to the main logger.";
     Debug{"foo"} << "This is a debug message of foo, yet addressed to the 'foo' logger.";
     Debug{"foo.child"} << "This is a debug message of foo.child.";
 }
 
 
-void bar() {
+void mixed_events() {
     Critical{} << "bar() made a critical. The number is: " << 42;
     Warn{} << "Pressure raising... to " << 3.1415;
     Info{} << "All ok.";
@@ -283,31 +293,33 @@ void bar() {
 
 int main(int argc, char ** argv) {
 
-    // only critical and warnings of bar() are pushed, foo() remains silent
-    foo();
-    bar();
+    // only critical and warnings are pushed (no debug in the output)
+    only_debug();
+    mixed_events();
     
     // activate also debug messages: raise the barrier to debug ==> everything is pushed
     Logger::GetLogger()->SetBarrier(Level::kDebug);
-    
-    foo();
-    bar();
+    only_debug();
+    mixed_events();
     
     // now turn off ALL messages associated with logger "foo" but keep "foo.child" alive for debug.
     Logger::GetLogger("foo")->SetBarrier(Level::kSilent);
     Logger::GetLogger("foo.child")->SetBarrier(Level::kDebug);
-    
-    foo();
-    bar();
+    only_debug();
+    mixed_events();
     
     // tell 'foo.child' to use the same as 'foo' (which is kSilent) again.
     Logger::GetLogger("foo.child")->SetBarrier(Level::kUndefined);
-
-    foo();
-    bar();
+    only_debug();
+    mixed_events();
     
     // finally a multi-line example: each line will be prefixed
-    Info() << "The quick brown\n" << "fox jumped over\n" << "a minimum of " << 1337 << "\nlazy dogs." << std::endl;
+    Info() << "The quick brown\n" 
+           << "fox jumped over\n"
+           << "a minimum of " 
+           << 1337 
+           << "\nlazy dogs." 
+           << std::endl;
 
     return 0;
 }
