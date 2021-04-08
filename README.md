@@ -136,7 +136,7 @@ The API is really small. There are
 * `Logger`: Objects of this class are the "administrators" of events. They examine events and redirect them to
   a number of `Sink`s.
 * `Sink`: This is anything a event goes to. While working on an event, each `Sink` object uses a `Formatter`.
-* `SinkFactory`: This can create a sink based on an URL.
+* `SinkFactory`: This creates a sink based on an URL.
 * `Formatter`: This class prepares the final output.
 
 After an installation you'll find a doxygen documentation in your usual `doc` folder, which provides more
@@ -321,6 +321,111 @@ int main(int argc, char ** argv) {
            << "\nlazy dogs." 
            << std::endl;
 
+    return 0;
+}
+```
+
+### Creating a new Sink
+
+You may easily create a new sink by registering a `SinkProducer`. The `SinkFactory`
+maintains a list of known sink producers, which in turn creates sinks.
+
+**Example: create a UDP sink.**
+
+1. Create the Sink class
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+#include <string>
+
+class UDPSink : public headcode::logger::Sink {
+    
+    sockaddr_in destination;
+
+public:
+    UDPSink(std::string url) : Sink{url} {
+        ParseURL(url);
+    }
+
+private:
+
+    std::string GetDescription_() const override {
+        return "My UDP Log sink";
+    }
+
+    void Log_(Event const &) override;
+};
+```
+
+Any object of this class will have automatically the `StandardFormatter` assigned
+which creates a multiline log with timestamps. You may change the formatter to something
+else if you want.
+
+```c++
+void UDPSink::ParseURL(std::string url) {
+    // convert an "udp://host:port" to a sockaddr_in ...
+    sockaddr_in = ...
+}
+
+
+void UDPSink::Log_(Event const & event) {
+    
+    std::string payload = Format(event);
+    
+    // send via UDP (operating system details not shown)
+    int socket_fd = socket(....);
+    if (sendto(socket_fd, payload.data(), payload.size(), ....)) {
+    }
+    close(socket_fd);
+}
+```
+
+2. Register a producer for this sink:
+
+```c++
+struct UDPSinkProducer : public SinkFactory::Producer {
+
+    // Creates a new sink.
+    std::shared_ptr<Sink> Create(std::string const & url) override {
+        return std::make_shared<UDPSink>(url);
+    }
+
+    // Names this producer.
+    std::string GetId() const override {
+        return "UDPSink Producer";
+    }
+
+    // Called by the SinkFactory to test if we can operate on the given URL.
+    bool Match(std::string const & url) const override {
+        return url.substr(0, 6) == "udp://";
+    }
+};
+```
+
+3. Finally log anything remotely
+
+```c++
+#include <headcode/logger/logger.hpp>
+
+// the UDPSink class
+#include "udp_sink.hpp"
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+
+    // Let the sink factory create UDP Sinks from now on
+    SinkFactory::Register(std::make_unique<UDPSinkProducer>());
+    
+    // Add an UDP sink to our standard logger
+    auto sink = SinkFactory::Create("udp://example.logger.host:1234");
+    GetLogger()->AddSink(Sink);
+    
+    // Enable also debug messages
+    GetLogger()->SetBarrier(Level::kDebug);
+    
+    Debug{} << "Hello remote host!";
     return 0;
 }
 ```
