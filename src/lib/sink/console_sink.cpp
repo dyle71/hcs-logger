@@ -32,7 +32,7 @@ std::map<std::string, std::shared_ptr<ConsoleSink>> ConsoleSink::Producer::sinks
 std::mutex ConsoleSink::Producer::mutex;
 
 
-ConsoleSink::ConsoleSink(std::string stream_url) : MutexSink{std::move(stream_url)} {
+ConsoleSink::ConsoleSink(std::string stream_url) : MutexSink{stream_url} {
 
     int stream_fd = 0;
     URL url{stream_url};
@@ -48,6 +48,8 @@ ConsoleSink::ConsoleSink(std::string stream_url) : MutexSink{std::move(stream_ur
 
     if (stream_fd != 0 && isatty(stream_fd) == 1) {
         SetFormatter(std::make_unique<ColorDarkBackgroundFormatter>());
+    } else {
+        SetFormatter(std::make_unique<StandardFormatter>());
     }
 }
 
