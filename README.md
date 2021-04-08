@@ -29,6 +29,22 @@ int main(int argc, char ** argv) {
 }
 ```
 
+To enable debug messages right from the start **and** duplicate messages also 
+to a local file `app.log`:
+```c++
+#include <headcode/logger/logger.hpp>
+
+using namespace headcode::logger;
+
+int main(int argc, char ** argv) {
+    auto file_sink = SinkFactory::Create("file:app.log");
+    Logger::GetLogger()->AddSink(file_sink);
+    Logger::GetLogger()->SetBarrier(Level::kDebug);
+    Debug{} << "Hello World!";
+    return 0;
+}
+```
+
 That said, `hcs-logger` can do some more things:
 
 Features:
