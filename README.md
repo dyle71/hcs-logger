@@ -420,7 +420,7 @@ int main(int argc, char ** argv) {
     
     // Add an UDP sink to our standard logger
     auto sink = SinkFactory::Create("udp://example.logger.host:1234");
-    GetLogger()->AddSink(Sink);
+    GetLogger()->AddSink(sink);
     
     // Enable also debug messages
     GetLogger()->SetBarrier(Level::kDebug);
