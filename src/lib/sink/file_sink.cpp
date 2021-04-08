@@ -18,6 +18,18 @@ using namespace headcode::logger;
 using namespace headcode::url;
 
 
+/**
+ * @brief   All FileSinks storage.
+ */
+std::map<std::string, std::shared_ptr<FileSink>> FileSink::Producer::sinks;
+
+
+/**
+ * @brief   All FileSinks access synchronization mutex.
+ */
+std::mutex FileSink::Producer::mutex;
+
+
 FileSink::FileSink(std::string file_url) : MutexSink{file_url} {
     URL url{file_url};
     if (url.IsValid() && (url.GetScheme() == "file")) {
@@ -45,4 +57,12 @@ void FileSink::Log_(Event const & event) {
     stream.open(filename_, std::ios::out | std::ios::app);
     stream << Format(event);
     stream.flush();
+}
+
+
+void FileSink::RegisterProducer() {
+    static std::atomic_flag registered = ATOMIC_FLAG_INIT;
+    if (!registered.test_and_set()) {
+        SinkFactory::Register(std::make_unique<FileSink::Producer>());
+    }
 }

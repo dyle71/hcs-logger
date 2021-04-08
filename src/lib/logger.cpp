@@ -9,15 +9,13 @@
 #include <headcode/logger/logger_core.hpp>
 
 #include <headcode/logger/sink.hpp>
-
-#include <headcode/url/url.hpp>
+#include <headcode/logger/sink_factory.hpp>
 
 #include <map>
 #include <shared_mutex>
 #include <utility>
 
 using namespace headcode::logger;
-using namespace headcode::url;
 
 
 namespace headcode::logger {
@@ -188,21 +186,15 @@ Logger::Logger(std::string name, unsigned int id) : name_{std::move(name)}, id_(
 }
 
 
-void Logger::AddSink(std::string sink_url) {
+void Logger::AddSink(std::shared_ptr<Sink> sink) {
 
-    auto url = URL{sink_url}.Normalize();
-    if (!url.IsValid()) {
-        return;
-    }
-
-    auto sink = Sink::GetSink(url.GetURL());
     if (sink == nullptr) {
         return;
     }
 
     bool present = false;
     for (auto iter = sinks_.begin(); iter != sinks_.end() && !present; ++iter) {
-        present = (*iter) == sink;
+        present = (*iter).lock().get() == sink.get();
     }
     if (present) {
         return;
@@ -228,9 +220,10 @@ Logger * Logger::GetLogger(std::string name) {
 
         // create root logger
         LoggerRegistry::registry_.loggers_.clear();
+
         auto logger = std::unique_ptr<Logger>(new Logger{std::string{}, LoggerRegistry::registry_.logger_count++});
         if (name.empty()) {
-            logger->SetSink("stderr:");
+            logger->SetSink(SinkFactory::Create("stderr:"));
             logger->SetBarrier(Level::kWarning);
             LoggerRegistry::registry_.loggers_.emplace(name, std::move(logger));
         }
@@ -310,7 +303,10 @@ void Logger::Push(Event const & event) {
         }
     } else {
         for (auto & sink : sinks_) {
-            sink->Log(event);
+            auto real_sink = sink.lock();
+            if (real_sink.get() != nullptr) {
+                real_sink->Log(event);
+            }
         }
     }
 }
@@ -336,14 +332,9 @@ void Logger::SetBarrier(Level barrier) {
 }
 
 
-void Logger::SetSink(std::string sink_url) {
-
-    auto url = URL{sink_url}.Normalize().GetURL();
-    auto sink = Sink::GetSink(url);
-    if (sink == nullptr) {
-        return;
-    }
-
+void Logger::SetSink(std::shared_ptr<Sink> sink) {
     sinks_.clear();
-    sinks_.push_back(sink);
+    if (sink != nullptr) {
+        sinks_.push_back(sink);
+    }
 }

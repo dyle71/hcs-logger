@@ -13,6 +13,7 @@ set(LOGGER_SRC
     level.cpp
     logger.cpp
     sink.cpp
+    sink_factory.cpp
 
     formatter/color_dark_background_formatter.cpp
     formatter/simple_formatter.cpp
@@ -20,6 +21,7 @@ set(LOGGER_SRC
 
     sink/console_sink.cpp
     sink/file_sink.cpp
+    sink/null_sink.cpp
     sink/syslog_sink.cpp
 )
 

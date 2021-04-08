@@ -24,8 +24,8 @@ TEST(Threading, concurrent) {
 
     auto logger = headcode::logger::Logger::GetLogger();
     ASSERT_TRUE(logger != nullptr);
-    logger->SetSink("file:thread.log");
-    auto sink = headcode::logger::Sink::GetSink("file:thread.log");
+    auto sink = headcode::logger::SinkFactory::Create("file:thread.log");
+    logger->SetSink(sink);
     sink->SetFormatter(std::make_unique<headcode::logger::StandardFormatter>());
     logger->SetBarrier(headcode::logger::Level::kDebug);
 

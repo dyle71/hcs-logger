@@ -14,6 +14,7 @@
 #include "level.hpp"
 #include "logger_core.hpp"
 #include "sink.hpp"
+#include "sink_factory.hpp"
 #include "version.hpp"
 
 #endif

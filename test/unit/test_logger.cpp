@@ -82,17 +82,16 @@ TEST(Logger, sinks) {
     ASSERT_TRUE(logger != nullptr);
     EXPECT_STREQ(logger->GetName().c_str(), "<root>");
 
-    EXPECT_EQ(headcode::logger::Sink::GetSinks().size(), 1u);
-    logger->AddSink("null:");
+    logger->AddSink(headcode::logger::SinkFactory::Create("null:"));
     EXPECT_EQ(logger->GetSinks().size(), 2u);
-    logger->AddSink("null:");
-    EXPECT_EQ(logger->GetSinks().size(), 2u);
+    logger->AddSink(headcode::logger::SinkFactory::Create("null:"));
+    EXPECT_EQ(logger->GetSinks().size(), 3u);
 
-    logger->SetSink("null:");
+    logger->SetSink(headcode::logger::SinkFactory::Create("null:"));
     EXPECT_EQ(logger->GetSinks().size(), 1u);
 
-    logger->AddSink("null");
-    EXPECT_EQ(logger->GetSinks().size(), 1u);
+    logger->AddSink(headcode::logger::SinkFactory::Create("null:"));
+    EXPECT_EQ(logger->GetSinks().size(), 2u);
 }
 
 
@@ -343,8 +342,8 @@ TEST(Logger, parent_sink) {
         std::filesystem::remove("a.log");
     }
 
-    logger->SetSink("file:a.log");
-    auto sink = headcode::logger::Sink::GetSink("file:a.log");
+    auto sink = headcode::logger::SinkFactory::Create("file:a.log");
+    logger->SetSink(sink);
     auto formatter = std::make_unique<headcode::logger::SimpleFormatter>();
     sink->SetFormatter(std::move(formatter));
 

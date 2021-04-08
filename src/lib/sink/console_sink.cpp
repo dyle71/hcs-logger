@@ -13,10 +13,23 @@
 
 #include <unistd.h>
 
+#include <atomic>
 #include <iostream>
 
 using namespace headcode::logger;
 using namespace headcode::url;
+
+
+/**
+ * @brief   All ConsoleSinks storage.
+ */
+std::map<std::string, std::shared_ptr<ConsoleSink>> ConsoleSink::Producer::sinks;
+
+
+/**
+ * @brief   All ConsoleSinks access synchronization mutex.
+ */
+std::mutex ConsoleSink::Producer::mutex;
 
 
 ConsoleSink::ConsoleSink(std::string stream_url) : MutexSink{std::move(stream_url)} {
@@ -40,7 +53,7 @@ ConsoleSink::ConsoleSink(std::string stream_url) : MutexSink{std::move(stream_ur
 
 
 std::string ConsoleSink::GetDescription_() const {
-    return std::string{"ConsoleSink"};
+    return std::string{"ConsoleSink to "} + GetURL();
 }
 
 
@@ -49,5 +62,13 @@ void ConsoleSink::Log_(Event const & event) {
         auto lock = LockWrite();
         *out_ << Format(event);
         out_->flush();
+    }
+}
+
+
+void ConsoleSink::RegisterProducer() {
+    static std::atomic_flag registered = ATOMIC_FLAG_INIT;
+    if (!registered.test_and_set()) {
+        SinkFactory::Register(std::make_unique<ConsoleSink::Producer>());
     }
 }

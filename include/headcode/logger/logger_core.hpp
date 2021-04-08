@@ -77,12 +77,12 @@ class Sink;         //!< @brief Forward declaration of a sink.
  */
 class Logger {
 
-    std::string name_;                          //!< @brief The name of this logger.
-    std::list<std::string> ancestors_;          //!< @brief All names of all parent loggers in order.
-    unsigned int id_{0};                        //!< @brief An id of this logger.
-    int barrier_{0};                            //!< @brief Log level barrier (see description).
-    std::vector<Sink *> sinks_;                 //!< @brief URLs of all Sinks attached to this logger.
-    std::uint64_t events_logged_{0};            //!< @brief Number of events logged so far.
+    std::string name_;                              //!< @brief The name of this logger.
+    std::list<std::string> ancestors_;              //!< @brief All names of all parent loggers in order.
+    unsigned int id_{0};                            //!< @brief An id of this logger.
+    int barrier_{0};                                //!< @brief Log level barrier (see description).
+    std::vector<std::weak_ptr<Sink>> sinks_;        //!< @brief URLs of all Sinks attached to this logger.
+    std::uint64_t events_logged_{0};                //!< @brief Number of events logged so far.
 
 public:
     /**
@@ -112,11 +112,10 @@ public:
 
     /**
      * @brief   Adds a sink to the sinks of this logger.
-     * If the sink is already in the list, the sink is not added.
-     * A nullptr sink is not accepted and rejected.
-     * @param   sink        URL of a sink to add.
+     * Avoids double adding.
+     * @param   sink        sink to add.
      */
-    void AddSink(std::string sink);
+    void AddSink(std::shared_ptr<Sink> sink);
 
     /**
      * @brief   All the ancestors of this logger in order.
@@ -206,7 +205,7 @@ public:
      * @brief   Gets all the sinks associated with this logger.
      * @return  All the sinks of this logger.
      */
-    [[nodiscard]] std::vector<Sink *> const & GetSinks() const {
+    [[nodiscard]] std::vector<std::weak_ptr<Sink>> const & GetSinks() const {
         return sinks_;
     }
 
@@ -240,10 +239,9 @@ public:
     /**
      * @brief   Sets a single Sink.
      * This removes any previous sinks at this logger.
-     * A nullptr is not accepted but rejected.
-     * @param   sink        URL of the sink to set.
+     * @param   sink        the sink to set.
      */
-    void SetSink(std::string sink);
+    void SetSink(std::shared_ptr<Sink> sink);
 
 private:
     /**

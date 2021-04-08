@@ -15,7 +15,7 @@ using namespace headcode::logger;
 
 
 void SetupLogging() {
-    Logger::GetLogger()->SetSink("file:");
+    Logger::GetLogger()->SetSink(headcode::logger::SinkFactory::Create("file:"));
     Logger::GetLogger()->SetBarrier(Level::kDebug);
 }
 

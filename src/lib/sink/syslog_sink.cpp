@@ -57,3 +57,11 @@ void SyslogSink::Log_(Event const & event) {
     syslog(priority, "%s", Format(event).c_str());
     closelog();
 }
+
+
+void SyslogSink::RegisterProducer() {
+    static std::atomic_flag registered = ATOMIC_FLAG_INIT;
+    if (!registered.test_and_set()) {
+        SinkFactory::Register(std::make_unique<SyslogSink::Producer>());
+    }
+}

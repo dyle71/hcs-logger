@@ -11,6 +11,10 @@
 
 #include <headcode/logger/sink.hpp>
 
+#include <headcode/logger/sink_factory.hpp>
+
+#include <headcode/url/url.hpp>
+
 #include <string>
 
 
@@ -25,6 +29,44 @@ namespace headcode::logger {
  */
 class NullSink : public Sink {
 
+    /**
+     * @brief   Sink producer instance.
+     */
+    struct Producer : public SinkFactory::Producer {
+
+        /**
+         * @brief   Creates a sink.
+         * @param   url         The URL of the sink to create.
+         * @return  A sink instance.
+         */
+        [[nodiscard]] std::shared_ptr<Sink> Create(std::string const & url) override {
+
+            auto parsed_url = headcode::url::URL{url}.Normalize();
+            if (parsed_url.GetScheme() == "null") {
+                return std::make_shared<NullSink>();
+            }
+            return nullptr;
+        }
+
+        /**
+         * @brief   Returns a human readable id for the sink producer.
+         * This id is also used to identify the producer within the factory.
+         * @return  A description for the sink producer.
+         */
+        [[nodiscard]] std::string GetId() const override {
+            return "NullSink Producer";
+        }
+
+        /**
+         * @brief   Checks if this producer is capable to create the object.
+         * @brief   url         The URL to match against.
+         * @return  True, if this producer can create Sinks matching the given URL.
+         */
+        [[nodiscard]] bool Match(std::string const & url) const override {
+            auto parsed_url = headcode::url::URL{url}.Normalize();
+            return parsed_url.GetScheme() == "null";
+        }
+    };
 
 public:
     /**
@@ -32,6 +74,11 @@ public:
      */
     NullSink() : Sink{"null:"} {
     }
+
+    /**
+     * @brief   Registers a Producer at the Sink Factory.
+     */
+    static void RegisterProducer();
 
 private:
     /**

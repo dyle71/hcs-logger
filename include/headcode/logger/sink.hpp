@@ -87,7 +87,7 @@ public:
     /**
      * @brief   Destructor
      */
-    virtual ~Sink() = default;
+    virtual ~Sink();
 
     /**
      * @brief   Assignment operator.
@@ -148,20 +148,6 @@ public:
     [[nodiscard]] Formatter const & GetFormatter() const {
         return *(formatter_.get());
     }
-
-    /**
-     * @brief   Gets or create the sink with the given URL.
-     * If the sink is new, then we remember the sink internally.
-     * @param   url         the URL of the sink to create.
-     * @return  A sink object instance or nullptr if the URL scheme is unknown.
-     */
-    static Sink * GetSink(std::string url);
-
-    /**
-     * @brief   Retrieves a list of all known sinks.
-     * @return  A list of all registered sinks URLs.
-     */
-    [[nodiscard]] static std::vector<std::string> GetSinks();
 
     /**
      * @brief   Retrieves the URL of this sink.

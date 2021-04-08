@@ -6,11 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - ...
+## [2.0.0] - ...
 ### Added
 - Support for ninja.
 - Support for conan package manager.
-- Sinks are now identified with their URL.
+- Merciless refactoring of sinks and loggers.
+- Sinks are now created by a SinkFactory.
 
 ## [1.0.1] - Lost
 ### Added
