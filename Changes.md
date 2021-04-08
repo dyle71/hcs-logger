@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.0] - ...
+## [2.0.0] - 2021-04-08
 ### Added
 - Support for ninja.
 - Support for conan package manager.
@@ -24,8 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [Unreleased]: https://gitlab.com/headcode.space/logger/-/tree/develop
-[1.0.2]: https://gitlab.com/headcode.space/logger/-/releases/v1.0.2
-[1.0.1]: https://gitlab.com/headcode.space/logger/-/releases/v1.0.1
+[2.0.0]: https://gitlab.com/headcode.space/logger/-/releases/v2.0.0
 [1.0.0]: https://gitlab.com/headcode.space/logger/-/releases/v1.0.0
 
 ---
